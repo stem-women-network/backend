@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from pydantic import EmailStr
 from sqlalchemy.orm import RelationshipDirection, declared_attr
 from sqlalchemy.orm.relationships import _RelationshipDeclared
@@ -11,6 +11,7 @@ class Usuario(SQLModel, table=True):
     cpf : str = Field(min_length=11,max_length=11)
     email : EmailStr = Field()
     senha : str = Field(min_length=60, max_length=60)
+    data_nascimento : date = Field()
 
     administradores : list["Administrador"] = Relationship(back_populates="usuario")
     coordenadores : list["Coordenador"] = Relationship(back_populates="usuario")

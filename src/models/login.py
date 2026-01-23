@@ -60,7 +60,7 @@ class CadastroModel(BaseModel):
     nome_completo : str
     cpf : str
     celular : str
-    data_nascimento : date
+    data_nascimento : str
     linkedin : str | None
 
 class CadastroMentorada(CadastroModel):
@@ -92,7 +92,12 @@ class Cadastro:
                 nome_completo= cadastro.nome_completo,
                 email=cadastro.email,
                 senha=get_password_hash(cadastro.senha),
-                cpf=cadastro.cpf
+                cpf=cadastro.cpf,
+                data_nascimento = date(
+                    int(cadastro.data_nascimento.split("/")[0]),
+                    int(cadastro.data_nascimento.split("/")[1]) - 1,
+                    int(cadastro.data_nascimento.split("/")[2]) - 1
+                )
             )
             session.add(usuario)
             mentorada = Mentorada(
@@ -126,7 +131,12 @@ class Cadastro:
                 nome_completo=cadastro.nome_completo,
                 email=cadastro.email,
                 senha=get_password_hash(cadastro.senha),
-                cpf=cadastro.cpf
+                cpf=cadastro.cpf,
+                data_nascimento = date(
+                    int(cadastro.data_nascimento.split("/")[0]),
+                    int(cadastro.data_nascimento.split("/")[1]) - 1,
+                    int(cadastro.data_nascimento.split("/")[2]) - 1
+                )
             )
             session.add(usuario)
             mentora = Mentora(
