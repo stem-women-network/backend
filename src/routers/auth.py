@@ -21,7 +21,7 @@ def login(credentials: LoginModel, response : Response):
         response.status_code = HTTP_401_UNAUTHORIZED
         return HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
-@router.post("/signup-mentee")
+@router.post("/signup-mentor")
 def signup_mentora(credentials: CadastroMentora, response:Response):
     signup = Cadastro.fazer_cadastro_mentora(credentials)
     if signup is None:
@@ -29,7 +29,7 @@ def signup_mentora(credentials: CadastroMentora, response:Response):
         return HTTPException(status_code=HTTP_409_CONFLICT,detail="Houve um erro ao fazer o cadastro")
     return {"message" : "Cadastro feito com sucesso"}
 
-@router.post("/signup-mentor")
+@router.post("/signup-mentee")
 def signup_mentorada(credentials: CadastroMentorada, response:Response):
     signup = Cadastro.fazer_cadastro_mentorada(credentials)
     if signup is None:

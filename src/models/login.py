@@ -67,8 +67,8 @@ class CadastroMentorada(CadastroModel):
     curso : str
     ano_curso : int
     semestre : int
-    genero: Genero
-    etnia : Etnia
+    genero: str
+    etnia : str
     expectativas : str
     compartilhar_experiencias : str
     desenvolver_competencias : str
@@ -80,7 +80,7 @@ class CadastroMentora(CadastroModel):
     formacao : str
     cargo_atual : str
     areas_atuacao : str
-    como_ficou_sabendo : ComoFicouSabendo
+    como_ficou_sabendo : str
     
     
 class Cadastro:
@@ -103,8 +103,8 @@ class Cadastro:
                 disponibilidade = None,
                 objetivo_mentoria = cadastro.desenvolver_competencias,
                 expectativas=cadastro.expectativas,
-                genero = cadastro.genero,
-                etnia = cadastro.etnia,
+                genero = Genero(cadastro.genero),
+                etnia = Etnia(cadastro.etnia),
                 linkedin = None,
                 id_universidade_instituicao=None,
             )
@@ -137,7 +137,7 @@ class Cadastro:
                 id_usuario=usuario.id_usuario,
                 id_universidade_instituicao=None,
                 disponibilidade=None,
-                como_ficou_sabendo=cadastro.como_ficou_sabendo
+                como_ficou_sabendo=ComoFicouSabendo(cadastro.como_ficou_sabendo)
             )
             session.add(mentora)
             session.commit()
