@@ -70,7 +70,7 @@ class Mentorada(SQLModel, table=True):
     
     pedidos : list["PedidosMentoria"] = Relationship(back_populates="mentorada")
     mentorias : list["Mentoria"] = Relationship(back_populates="mentorada")
-    proximos_encontros : list["Mentoria"] = Relationship(back_populates="mentorada")
+    proximos_encontros : list["ProximoEncontro"] = Relationship(back_populates="mentorada")
     certificados : list["Certificado"] = Relationship(back_populates="mentorada")
     encontros : list["Encontro"] = Relationship(back_populates="mentorada")
     

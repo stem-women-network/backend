@@ -94,13 +94,14 @@ class Cadastro:
                 senha=get_password_hash(cadastro.senha),
                 cpf=cadastro.cpf,
                 data_nascimento = date(
-                    int(cadastro.data_nascimento.split("/")[0]),
+                    int(cadastro.data_nascimento.split("/")[2]),
                     int(cadastro.data_nascimento.split("/")[1]) - 1,
-                    int(cadastro.data_nascimento.split("/")[2]) - 1
+                    int(cadastro.data_nascimento.split("/")[0]) - 1
                 )
             )
             session.add(usuario)
             mentorada = Mentorada(
+                foto_perfil = None,
                 id_usuario = usuario.id_usuario,
                 ano_curso = cadastro.ano_curso,
                 semestre = cadastro.semestre,
@@ -108,10 +109,11 @@ class Cadastro:
                 disponibilidade = None,
                 objetivo_mentoria = cadastro.desenvolver_competencias,
                 expectativas=cadastro.expectativas,
-                genero = Genero(cadastro.genero),
-                etnia = Etnia(cadastro.etnia),
+                genero = Genero(cadastro.genero.lower()),
+                etnia = Etnia(cadastro.etnia.lower()),
                 linkedin = None,
                 id_universidade_instituicao=None,
+                termo_assinado = None
             )
             session.add(mentorada)
             session.commit()
@@ -133,13 +135,14 @@ class Cadastro:
                 senha=get_password_hash(cadastro.senha),
                 cpf=cadastro.cpf,
                 data_nascimento = date(
-                    int(cadastro.data_nascimento.split("/")[0]),
+                    int(cadastro.data_nascimento.split("/")[2]),
                     int(cadastro.data_nascimento.split("/")[1]) - 1,
-                    int(cadastro.data_nascimento.split("/")[2]) - 1
+                    int(cadastro.data_nascimento.split("/")[0]) - 1
                 )
             )
             session.add(usuario)
             mentora = Mentora(
+                foto_perfil=None,
                 cargo_atual=cadastro.cargo_atual,
                 areas_atuacao=int(cadastro.areas_atuacao),
                 linkedin=cadastro.linkedin,
@@ -147,7 +150,8 @@ class Cadastro:
                 id_usuario=usuario.id_usuario,
                 id_universidade_instituicao=None,
                 disponibilidade=None,
-                como_ficou_sabendo=ComoFicouSabendo(cadastro.como_ficou_sabendo)
+                como_ficou_sabendo=ComoFicouSabendo(cadastro.como_ficou_sabendo.lower()),
+                termo_assinado=None
             )
             session.add(mentora)
             session.commit()
