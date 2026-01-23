@@ -3,7 +3,7 @@ import os
 from dotenv import dotenv_values, load_dotenv
 from fastapi import Depends
 from sqlmodel import Session, create_engine
-from .schemas.tables import *
+from schemas.tables import *
 
 config = dotenv_values(".env")
 DATABASE_URL = config["DATABASE_URL"]

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Response
 from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED, HTTP_405_METHOD_NOT_ALLOWED, HTTP_409_CONFLICT
 
-from src.models.login import Cadastro, CadastroModel, Login, LoginModel
+from src.models.login import Cadastro, CadastroMentorada, CadastroModel, Login, LoginModel
 
 router = APIRouter()
 
@@ -28,3 +28,11 @@ def signup(credentials: CadastroModel, response:Response):
         response.status_code = HTTP_409_CONFLICT
         return HTTPException(status_code=HTTP_409_CONFLICT)
     return {"message" : "Cadastro feito com sucesso"}
+
+@router.post("/signup-menteer")
+def signup_mentorara(credentials: CadastroMentorada):
+    credentials
+
+@router.post("/signup")
+def signup_mentorada():
+    pass

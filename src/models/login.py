@@ -1,7 +1,7 @@
 import enum
-from typing import Literal, Tuple
+from typing import Literal, Optional, Tuple
 from pydantic import BaseModel
-from sqlmodel import Session, select
+from sqlmodel import Date, Session, select
 import bcrypt
 import jwt
 from datetime import date, timedelta, timezone, datetime
@@ -9,7 +9,7 @@ import dotenv
 import os
 
 from src.database import engine
-from src.schemas.tables import Usuario
+from src.schemas.tables import Mentora, Mentorada, Usuario
 
 dotenv.load_dotenv()
 
@@ -22,6 +22,29 @@ class TipoUsuario(enum.StrEnum):
     COORDENADOR = enum.auto()
     MENTORA     = enum.auto()
     MENTORADA   = enum.auto()
+
+class ComoFicouSabendo(enum.StrEnum):
+    INSTAGRAM  = enum.auto()
+    AMIGOS     = enum.auto()
+    PROFESSORA = enum.auto()
+    EVENTO     = enum.auto()
+    LINKEDIN   = enum.auto()
+    OUTROS     = enum.auto()
+
+class Genero(enum.StrEnum):
+    FEMININO          = enum.auto()
+    MASCULINO         = enum.auto()
+    NAO_BINARIO       = enum.auto()
+    PREFIRO_NAO_DIZER = enum.auto()
+    OUTRO             = enum.auto()
+
+class Etnia(enum.StrEnum):
+    AMARELA           = enum.auto()
+    BRANCA            = enum.auto()
+    INDIGENA          = enum.auto()
+    PARDA             = enum.auto()
+    PRETA             = enum.auto()
+    PREFIRO_NAO_DIZER = enum.auto()
     
 class Token(BaseModel):
     access_token: str
@@ -36,10 +59,32 @@ class CadastroModel(BaseModel):
     senha: str
     nome_completo : str
     cpf : str
+    celular : str
+    data_nascimento : Date
+    linkedin : str | None
 
+class CadastroMentorada(CadastroModel):
+    curso : str
+    semestre : int
+    genero: Genero
+    etnia : Etnia
+    expectativas : str
+    compartilhar_experiencias : str
+    desenvolver_competencias : str
+    foi_mentorada : bool
+    hobbies_interesses : str
+    comentarios: str
+
+class CadastroMentora(CadastroModel):
+    formacao : str
+    cargo_atual : str
+    areas_atuacao : str
+    como_ficou_sabendo : ComoFicouSabendo
+    
+    
 class Cadastro:
     @classmethod
-    def fazer_cadastro(cls, cadastro: CadastroModel):
+    def fazer_cadastro_mentorada(cls, cadastro: CadastroMentorada):
         session = Session(engine)
         try:
             usuario = Usuario(
@@ -57,8 +102,38 @@ class Cadastro:
             return None
         finally:
             session.close()
-
-
+            
+    @classmethod
+    def fazer_cadastro_mentora(cls, cadastro: CadastroMentora):
+        session = Session(engine)
+        try:
+            usuario = Usuario(
+                nome_completo=cadastro.nome_completo,
+                email=cadastro.email,
+                senha=get_password_hash(cadastro.senha),
+                cpf=cadastro.cpf
+            )
+            session.add(usuario)
+            mentora = Mentora(
+                cargo_atual=cadastro.cargo_atual,
+                areas_atuacao=int(cadastro.areas_atuacao),
+                linkedin=cadastro.linkedin,
+                formacao=cadastro.formacao,
+                id_usuario=usuario.id_usuario,
+                id_universidade_instituicao=1,
+                disponibilidade=None,
+                como_ficou_sabendo=cadastro.
+            )
+            session.add(mentora)
+            session.commit()
+            session.close()
+            return True
+        except Exception as e:
+            print(e)
+            return None
+        finally:
+            session.close()
+        
 class Login:
     @classmethod
     def fazer_login(cls, login : LoginModel) -> Tuple[str | None, dict[str, str] | None]:
