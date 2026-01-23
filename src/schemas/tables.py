@@ -49,6 +49,7 @@ class Coordenador(SQLModel, table=True):
     
 class Mentorada(SQLModel, table=True):
     id_mentorada : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    foto_perfil : bytes | None = Field()
     linkedin : str | None = Field(max_length=100)
     curso_area_stem : str = Field(max_length=100)
     ano_curso : int = Field(max_digits=4)
@@ -58,8 +59,8 @@ class Mentorada(SQLModel, table=True):
     etnia : str = Field()
     genero : str = Field()
     expectativas : str = Field(max_length=300)
-    
-    conta_ativa : bool = Field(default = True)
+    termo_assinado : bytes | None = Field()
+    conta_ativa : bool = Field(default = False)
 
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
@@ -76,14 +77,16 @@ class Mentorada(SQLModel, table=True):
 
 class Mentora(SQLModel, table=True):
     id_mentora : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    foto_perfil : bytes | None = Field()
     linkedin : str | None = Field(max_length=100)
     formacao : str = Field(max_length=100)
     cargo_atual : str = Field(max_length=100)
     areas_atuacao : int = Field(max_digits=9)
     disponibilidade : int | None = Field(max_digits=3)
     como_ficou_sabendo : str = Field()
-    conta_ativa : bool = Field(default=True)
-
+    termo_assinado : bytes | None = Field()
+    conta_ativa : bool = Field(default=False)
+    
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
     usuario : Usuario = Relationship(back_populates="mentoras")
