@@ -65,6 +65,7 @@ class CadastroModel(BaseModel):
 
 class CadastroMentorada(CadastroModel):
     curso : str
+    ano_curso : int
     semestre : int
     genero: Genero
     etnia : Etnia
@@ -94,6 +95,20 @@ class Cadastro:
                 cpf=cadastro.cpf
             )
             session.add(usuario)
+            mentorada = Mentorada(
+                id_usuario = usuario.id_usuario,
+                ano_curso = cadastro.ano_curso,
+                semestre = cadastro.semestre,
+                curso_area_stem = cadastro.curso,
+                disponibilidade = None,
+                objetivo_mentoria = cadastro.desenvolver_competencias,
+                expectativas=cadastro.expectativas,
+                genero = cadastro.genero,
+                etnia = cadastro.etnia,
+                linkedin = None,
+                id_universidade_instituicao=None,
+            )
+            session.add(mentorada)
             session.commit()
             session.close()
             return True
@@ -120,9 +135,9 @@ class Cadastro:
                 linkedin=cadastro.linkedin,
                 formacao=cadastro.formacao,
                 id_usuario=usuario.id_usuario,
-                id_universidade_instituicao=1,
+                id_universidade_instituicao=None,
                 disponibilidade=None,
-                como_ficou_sabendo=cadastro.
+                como_ficou_sabendo=cadastro.como_ficou_sabendo
             )
             session.add(mentora)
             session.commit()

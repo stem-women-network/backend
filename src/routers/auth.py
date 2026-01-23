@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Response
 from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED, HTTP_405_METHOD_NOT_ALLOWED, HTTP_409_CONFLICT
 
-from src.models.login import Cadastro, CadastroMentorada, CadastroModel, Login, LoginModel
+from src.models.login import Cadastro, CadastroMentora, CadastroMentorada, CadastroModel, Login, LoginModel
 
 router = APIRouter()
 
@@ -21,18 +21,18 @@ def login(credentials: LoginModel, response : Response):
         response.status_code = HTTP_401_UNAUTHORIZED
         return HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
-@router.post("/signup")
-def signup(credentials: CadastroModel, response:Response):
-    signup = Cadastro.fazer_cadastro(credentials)
+@router.post("/signup-mentee")
+def signup_mentorar(credentials: CadastroMentora, response:Response):
+    signup = Cadastro.fazer_cadastro_mentora(credentials)
     if signup is None:
         response.status_code = HTTP_409_CONFLICT
-        return HTTPException(status_code=HTTP_409_CONFLICT)
+        return HTTPException(status_code=HTTP_409_CONFLICT,detail="Houve um erro ao fazer o cadastro")
     return {"message" : "Cadastro feito com sucesso"}
 
-@router.post("/signup-menteer")
-def signup_mentorara(credentials: CadastroMentorada):
-    credentials
-
-@router.post("/signup")
-def signup_mentorada():
-    pass
+@router.post("/signup-mentor")
+def signup_mentorada(credentials: CadastroMentorada, response:Response):
+    signup = Cadastro.fazer_cadastro_mentorada(credentials)
+    if signup is None:
+        response.status_code = HTTP_409_CONFLICT
+        return HTTPException(status_code=HTTP_409_CONFLICT,detail="Houve um erro ao fazer o cadastro")
+    return {"message" : "Cadastro feito com sucesso"}

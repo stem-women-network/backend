@@ -61,7 +61,7 @@ class Mentorada(SQLModel, table=True):
     conta_ativa : bool = Field(default = True)
 
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
-    id_universidade_instituicao : uuid.UUID = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
+    id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
     
     usuario : Usuario = Relationship(back_populates="mentoradas")
     universidade_instituicao : UniversidadeInstituicao = Relationship(back_populates="mentoradas")
@@ -84,7 +84,7 @@ class Mentora(SQLModel, table=True):
     conta_ativa : bool = Field(default=True)
 
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
-    id_universidade_instituicao : uuid.UUID = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
+    id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
     usuario : Usuario = Relationship(back_populates="mentoras")
     universidade_instituicao : UniversidadeInstituicao = Relationship(back_populates="mentoras")
 
