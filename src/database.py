@@ -12,6 +12,7 @@ assert DATABASE_URL != None
 engine = create_engine(DATABASE_URL, echo=True)
 
 def create_db_and_tables():
+    SQLModel.metadata.drop_all(engine)
     SQLModel.metadata.create_all(engine)
 
 def get_session():
@@ -19,6 +20,3 @@ def get_session():
         yield session
 
 SessionDep = Annotated[Session, Depends(get_session)]
-
-if __name__ == "__main__":
-    create_db_and_tables()
