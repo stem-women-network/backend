@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/data/db
+    networks:
+      - database
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+
+volumes:
+  db-data:
+    name: "stem-women"
+    external: true
+    
+networks:
+  # The presence of these objects is sufficient to define them
+  database: {}
