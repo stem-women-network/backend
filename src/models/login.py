@@ -60,7 +60,7 @@ class CadastroModel(BaseModel):
     nome_completo : str
     cpf : str
     celular : str
-    data_nascimento : Date
+    data_nascimento : date
     linkedin : str | None
 
 class CadastroMentorada(CadastroModel):
