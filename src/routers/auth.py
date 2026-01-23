@@ -22,7 +22,7 @@ def login(credentials: LoginModel, response : Response):
         return HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
 @router.post("/signup-mentee")
-def signup_mentorar(credentials: CadastroMentora, response:Response):
+def signup_mentora(credentials: CadastroMentora, response:Response):
     signup = Cadastro.fazer_cadastro_mentora(credentials)
     if signup is None:
         response.status_code = HTTP_409_CONFLICT
