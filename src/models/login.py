@@ -95,8 +95,8 @@ class Cadastro:
                 cpf=cadastro.cpf,
                 data_nascimento = date(
                     int(cadastro.data_nascimento.split("/")[2]),
-                    int(cadastro.data_nascimento.split("/")[1]) - 1,
-                    int(cadastro.data_nascimento.split("/")[0]) - 1
+                    int(cadastro.data_nascimento.split("/")[1]),
+                    int(cadastro.data_nascimento.split("/")[0])
                 )
             )
             session.add(usuario)
@@ -136,8 +136,8 @@ class Cadastro:
                 cpf=cadastro.cpf,
                 data_nascimento = date(
                     int(cadastro.data_nascimento.split("/")[2]),
-                    int(cadastro.data_nascimento.split("/")[1]) - 1,
-                    int(cadastro.data_nascimento.split("/")[0]) - 1
+                    int(cadastro.data_nascimento.split("/")[1]),
+                    int(cadastro.data_nascimento.split("/")[0])
                 )
             )
             session.add(usuario)
