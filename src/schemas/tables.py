@@ -1,8 +1,6 @@
 from datetime import date, datetime
 from pydantic import EmailStr
-from sqlalchemy.orm import RelationshipDirection, declared_attr
-from sqlalchemy.orm.relationships import _RelationshipDeclared
-from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, table
+from sqlmodel import ARRAY, Column, Field, Relationship, Session, SQLModel, create_engine, table, String
 import uuid
 
 class Usuario(SQLModel, table=True):
@@ -81,7 +79,7 @@ class Mentora(SQLModel, table=True):
     linkedin : str | None = Field(max_length=100)
     formacao : str = Field(max_length=100)
     cargo_atual : str = Field(max_length=100)
-    areas_atuacao : int = Field(max_digits=9)
+    areas_atuacao : list[str] = Field(sa_column=Column(ARRAY(String)))
     disponibilidade : int | None = Field(max_digits=3)
     como_ficou_sabendo : str = Field()
     termo_assinado : bytes | None = Field()

@@ -23,14 +23,6 @@ class TipoUsuario(enum.StrEnum):
     MENTORA     = enum.auto()
     MENTORADA   = enum.auto()
 
-class ComoFicouSabendo(enum.StrEnum):
-    INSTAGRAM  = enum.auto()
-    AMIGOS     = enum.auto()
-    PROFESSORA = enum.auto()
-    EVENTO     = enum.auto()
-    LINKEDIN   = enum.auto()
-    OUTROS     = enum.auto()
-
 class Genero(enum.StrEnum):
     FEMININO          = enum.auto()
     MASCULINO         = enum.auto()
@@ -79,7 +71,7 @@ class CadastroMentorada(CadastroModel):
 class CadastroMentora(CadastroModel):
     formacao : str
     cargo_atual : str
-    areas_atuacao : str
+    areas_atuacao : list[str]
     como_ficou_sabendo : str
     
     
@@ -144,13 +136,13 @@ class Cadastro:
             mentora = Mentora(
                 foto_perfil=None,
                 cargo_atual=cadastro.cargo_atual,
-                areas_atuacao=int(cadastro.areas_atuacao),
+                areas_atuacao=cadastro.areas_atuacao,
                 linkedin=cadastro.linkedin,
                 formacao=cadastro.formacao,
                 id_usuario=usuario.id_usuario,
                 id_universidade_instituicao=None,
                 disponibilidade=None,
-                como_ficou_sabendo=ComoFicouSabendo(cadastro.como_ficou_sabendo.lower()),
+                como_ficou_sabendo=cadastro.como_ficou_sabendo.lower(),
                 termo_assinado=None
             )
             session.add(mentora)
