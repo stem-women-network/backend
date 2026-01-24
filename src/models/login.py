@@ -170,7 +170,6 @@ class Login:
         try:
             statement = select(Usuario).where(Usuario.email == login.email)
             usuario = session.exec(statement).one()
-            session.close()
             if verify_password(login.senha, usuario.senha):
                 return (create_access_token(data={
                     "nome" : usuario.nome_completo,
@@ -179,6 +178,7 @@ class Login:
                         {"nome_completo" : usuario.nome_completo,
                          "tipo_usuario" : get_tipo_usuario(usuario).value}
                         )
+            session.close()
         except Exception as e:
             print(e)
             return (None, None)
@@ -219,13 +219,13 @@ def get_current_user(token: str):
     return user
 
 def get_tipo_usuario(usuario : Usuario) -> TipoUsuario:
-    if len(usuario.administradores) > 0:
+    if usuario.administradores is not None and len(usuario.administradores) > 0:
         return TipoUsuario.ADMIN
-    if len(usuario.coordenadores) > 0:
+    if usuario.coordenadores is not None and len(usuario.coordenadores) > 0:
         return TipoUsuario.COORDENADOR
-    if len(usuario.mentoras) > 0:
+    if usuario.mentoras is not None and len(usuario.mentoras) > 0:
         return TipoUsuario.MENTORA
-    if len(usuario.mentoradas) > 0:
+    if usuario.mentoradas is not None and len(usuario.mentoradas) > 0:
         return TipoUsuario.MENTORADA
     else:
         raise Exception("O usuário não foi cadastrado corretamente") 
