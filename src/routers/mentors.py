@@ -166,7 +166,7 @@ def get_mentee(request : Request, response : Response):
     
 })
 def get_all_mentee(request: Request, response: Response):
-    """Get current mentee by mentor token"""
+    """Get all mentee by mentor token"""
     authorization = request.headers.get("authorization")
     if authorization is not None:
         token = authorization.split(" ")[1]
