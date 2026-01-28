@@ -1,6 +1,7 @@
 from datetime import date, datetime
+from typing import Literal
 from pydantic import EmailStr
-from sqlmodel import ARRAY, Column, Field, Relationship, Session, SQLModel, create_engine, table, String
+from sqlmodel import ARRAY, Column, Field, Relationship, Session, SQLModel, create_engine, table, String, JSON
 import uuid
 
 class Usuario(SQLModel, table=True):
@@ -124,6 +125,7 @@ class Mentoria(SQLModel, table=True):
     encontros : list["Encontro"] = Relationship(back_populates="mentoria")
     proximos_encontros : list["ProximoEncontro"] = Relationship(back_populates="mentoria")
     materiais : list["MaterialMentoria"] = Relationship(back_populates="mentoria")
+    mensagens : list["MensagemMentoria"] = Relationship(back_populates="mentoria")
     
 class ProximoEncontro(SQLModel, table=True):
     __tablename__ : str = "proximo_encontro"
@@ -171,4 +173,9 @@ class ArquivoTreinamento(SQLModel, table=True):
     titulo_arquivo : str = Field()
     arquivo : bytes = Field()
     
-
+class MensagemMentoria(SQLModel, table=True):
+    __tablename__ : str = "mensagem_mentoria" 
+    id_mensagem : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    mensagens : list[dict[Literal["actor","datetime","message"],str]] = Field(sa_column=Column(ARRAY(JSON)))
+    id_mentoria : uuid.UUID = Field(foreign_key="mentoria.id_mentoria")
+    mentoria : Mentoria = Relationship(back_populates="mensagens")    
