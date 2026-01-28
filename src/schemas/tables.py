@@ -123,7 +123,7 @@ class Mentoria(SQLModel, table=True):
     mentorada : Mentorada = Relationship(back_populates="mentorias")
     encontros : list["Encontro"] = Relationship(back_populates="mentoria")
     proximos_encontros : list["ProximoEncontro"] = Relationship(back_populates="mentoria")
-
+    materiais : list["MaterialMentoria"] = Relationship(back_populates="mentoria")
     
 class ProximoEncontro(SQLModel, table=True):
     __tablename__ : str = "proximo_encontro"
@@ -155,4 +155,20 @@ class Certificado(SQLModel, table=True):
     
     mentorada : Mentorada = Relationship(back_populates="certificados")
     
+class MaterialMentoria(SQLModel, table=True):
+    __tablename__ : str = "material_mentoria"
+    id_arquivo_mentoria : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    tipo_material : str = Field()
+    titulo_material : str = Field()
+    arquivo : bytes = Field()
+    id_mentoria : uuid.UUID = Field(foreign_key="mentoria.id_mentoria")
+    mentoria : Mentoria = Relationship(back_populates="materiais")
+
+class ArquivoTreinamento(SQLModel, table=True):
+    __tablename__ : str = "arquivo_treinamento"
+    id_arquivo_treinamento : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    categoria: str = Field()
+    titulo_arquivo : str = Field()
+    arquivo : bytes = Field()
     
+
