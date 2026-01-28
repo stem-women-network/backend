@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import List, Literal
+from fastapi import APIRouter, HTTPException, Request, Response, status
+from sqlalchemy.engine import create
 from sqlmodel import Session, select
+from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
+from src.models.login import get_current_user, get_tipo_usuario
+from src.models.mentor import MentorModel
 from src.schemas.tables import Mentora, Usuario, UniversidadeInstituicao
 from src.database import SessionDep
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
 
 router = APIRouter()
 
@@ -115,3 +120,67 @@ def update_mentor_availability(id_mentora: int, disponibilidade: int, session: S
     session.commit()
     session.refresh(mentora)
     return {"message": "Availability updated", "disponibilidade": mentora.disponibilidade}
+
+@router.get("/get-current-mentee", responses={
+    HTTP_200_OK : {"model" : create_model("NewMentee",**{
+        "name" : str,
+        "course" : str,
+        "semester" : int,
+        "progress" : int
+    })},
+    HTTP_401_UNAUTHORIZED : {"model" : None}
+})
+def get_mentee(request : Request, response : Response):
+    """Get current mentee by mentor token"""
+    authorization = request.headers.get("authorization")
+    if authorization is not None:
+        token = authorization.split(" ")[1]
+        user = get_current_user(token)
+        if user is None:
+            response.status_code = HTTP_401_UNAUTHORIZED
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+        mentee = MentorModel.get_current_mentee_info(
+            token
+        )
+        if mentee is None:
+            response.status_code = HTTP_404_NOT_FOUND
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND)
+        return mentee
+    else:
+        response.status_code = HTTP_401_UNAUTHORIZED
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+
+@router.get("/get-all-mentee", responses={
+    HTTP_200_OK : {
+        "model" : List[create_model("AllMentee", **{
+            "name" : str,
+            "course" : str,
+            "status" : str,
+            "period" : str,
+            "meetings" : int
+        })]
+    },
+    HTTP_401_UNAUTHORIZED : {
+        "model" : None
+    }
+    
+})
+def get_all_mentee(request: Request, response: Response):
+    """Get current mentee by mentor token"""
+    authorization = request.headers.get("authorization")
+    if authorization is not None:
+        token = authorization.split(" ")[1]
+        user = get_current_user(token)
+        if user is None:
+            response.status_code = HTTP_401_UNAUTHORIZED
+            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+        mentee = MentorModel.get_all_mentee_info(
+            token
+        )
+        if mentee is None:
+            response.status_code = HTTP_404_NOT_FOUND
+            raise HTTPException(status_code=HTTP_404_NOT_FOUND)
+        return mentee
+    else:
+        response.status_code = HTTP_401_UNAUTHORIZED
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
