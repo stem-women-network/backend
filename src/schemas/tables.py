@@ -68,9 +68,7 @@ class Mentorada(SQLModel, table=True):
     
     pedidos : list["PedidosMentoria"] = Relationship(back_populates="mentorada")
     mentorias : list["Mentoria"] = Relationship(back_populates="mentorada")
-    proximos_encontros : list["ProximoEncontro"] = Relationship(back_populates="mentorada")
     certificados : list["Certificado"] = Relationship(back_populates="mentorada")
-    encontros : list["Encontro"] = Relationship(back_populates="mentorada")
     
 
 class Mentora(SQLModel, table=True):
@@ -92,9 +90,6 @@ class Mentora(SQLModel, table=True):
 
     pedidos : list["PedidosMentoria"] = Relationship(back_populates="mentora")
     mentorias : list["Mentoria"] = Relationship(back_populates="mentora")
-    proximos_encontros : list["ProximoEncontro"] = Relationship(back_populates="mentora")
-    encontros : list["Encontro"] = Relationship(back_populates="mentora")
-    
 
 class PedidosMentoria(SQLModel, table=True):
     __tablename__ : str = "pedidos_mentoria"
@@ -115,12 +110,19 @@ class Mentoria(SQLModel, table=True):
     avaliacao_mentorada : str | None = Field(max_length=500)
     nota_mentora : int | None = Field(max_digits=2)
     nota_mentorada : int | None = Field(max_digits=2)
+    progresso_mentorada : int = Field(default=0)
+    ano_mentoria : int = Field()
+    
+    comeco_mentoria : date = Field()
+    fim_mentoria : date | None = Field()
     
     id_mentora : uuid.UUID = Field(foreign_key="mentora.id_mentora")
     id_mentorada : uuid.UUID = Field(foreign_key="mentorada.id_mentorada")
     
     mentora : Mentora = Relationship(back_populates="mentorias")
     mentorada : Mentorada = Relationship(back_populates="mentorias")
+    encontros : list["Encontro"] = Relationship(back_populates="mentoria")
+    proximos_encontros : list["ProximoEncontro"] = Relationship(back_populates="mentoria")
 
     
 class ProximoEncontro(SQLModel, table=True):
@@ -129,12 +131,8 @@ class ProximoEncontro(SQLModel, table=True):
     data_sugerida : datetime = Field()
     topico_sugerido : str = Field(max_length=100)
     
-    id_mentora : uuid.UUID = Field(foreign_key="mentora.id_mentora")
-    id_mentorada : uuid.UUID = Field(foreign_key="mentorada.id_mentorada")
-    
-    mentora : Mentora = Relationship(back_populates="proximos_encontros")
-    mentorada : Mentorada = Relationship(back_populates="proximos_encontros")
-
+    id_mentoria : uuid.UUID = Field(foreign_key="mentoria.id_mentoria")
+    mentoria : Mentoria = Relationship(back_populates="proximos_encontros")
     
 class Encontro(SQLModel, table=True):
     id_encontro : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -144,12 +142,9 @@ class Encontro(SQLModel, table=True):
     topicos_discutidos : str = Field(max_length=300)
     progresso_mentorada : int = Field(gt=1, le=5)
     observacoes : str = Field(max_length=200)
-
-    id_mentora : uuid.UUID = Field(foreign_key="mentora.id_mentora")
-    id_mentorada : uuid.UUID = Field(foreign_key="mentorada.id_mentorada")
     
-    mentora : Mentora = Relationship(back_populates="encontros")
-    mentorada : Mentorada = Relationship(back_populates="encontros")
+    id_mentoria : uuid.UUID = Field(foreign_key="mentoria.id_mentoria")
+    mentoria : Mentoria = Relationship(back_populates="encontros")
 
     
 class Certificado(SQLModel, table=True):
