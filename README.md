@@ -24,6 +24,8 @@ pip install -r requirements.txt
 
 ```bash
 fastapi run main.py
+
+python -m uvicorn main:app --reload
 ```
 
 # TODO
