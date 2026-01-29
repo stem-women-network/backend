@@ -1,7 +1,8 @@
 from datetime import date, datetime
 from pydantic import EmailStr
-from sqlmodel import ARRAY, Column, Field, Relationship, Session, SQLModel, create_engine, table, String
+from sqlmodel import ARRAY, Column, Field, Relationship, Session, SQLModel, create_engine, table, String, JSON
 import uuid
+from sqlalchemy import VARCHAR
 
 class Usuario(SQLModel, table=True):
     id_usuario : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
