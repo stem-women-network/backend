@@ -11,7 +11,7 @@ Backend simples e funcional para gerenciar cadastros, matching e workflows do pr
 
 ```bash
 python -m venv .venv
-venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
 ### Instale dependências
@@ -23,14 +23,14 @@ pip install -r requirements.txt
 ### Rode o servidor
 
 ```bash
-fastapi run src/main.py
+fastapi run main.py
 ```
 
 # TODO
 
-[ ] Criar modelos
-[ ] Aplicar rotas
-[ ] Criar lógica de autentificação
-[ ] Crar serviços
+[ ] Criar modelos  
+[ ] Aplicar rotas  
+[ ] Criar lógica de autentificação  
+[ ] Criar serviços
 
 [ ] Testar
