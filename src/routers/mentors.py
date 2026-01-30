@@ -45,9 +45,11 @@ def list_mentors(session: SessionDep):
 
 @router.get("/get-current-mentee", responses={
     HTTP_200_OK : {"model" : create_model("NewMentee",**{
+        "id" : str,
         "name" : str,
         "course" : str,
         "semester" : int,
+        "status" : str,
         "progress" : int
     })},
     HTTP_401_UNAUTHORIZED : {"model" : None}
@@ -57,10 +59,6 @@ def get_mentee(request : Request, response : Response):
     authorization = request.headers.get("authorization")
     if authorization is not None:
         token = authorization.split(" ")[1]
-        user = get_current_user(token)
-        if user is None:
-            response.status_code = HTTP_401_UNAUTHORIZED
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
         mentee = MentorModel.get_current_mentee_info(
             token
         )
@@ -75,6 +73,7 @@ def get_mentee(request : Request, response : Response):
 @router.get("/get-all-mentee", responses={
     HTTP_200_OK : {
         "model" : List[create_model("AllMentee", **{
+            "id" : str,
             "name" : str,
             "course" : str,
             "status" : str,
@@ -93,14 +92,9 @@ def get_all_mentee(request: Request, response: Response):
     authorization = request.headers.get("authorization")
     if authorization is not None:
         token = authorization.split(" ")[1]
-        user = get_current_user(token)
-        if user is None:
-            response.status_code = HTTP_401_UNAUTHORIZED
-            raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
         mentees = MentorModel.get_all_mentee_info(
             token
         )
-        print(mentees)
         if mentees is None:
             response.status_code = HTTP_401_UNAUTHORIZED
             raise HTTPException(status_code=HTTP_404_NOT_FOUND)

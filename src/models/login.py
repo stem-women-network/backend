@@ -198,14 +198,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-def get_current_user(token: str):
-    session = Session(engine)
+def get_current_user(token: str, session : Session):
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     email = payload.get("email")
     if email is None:
         return None
     user = session.exec(select(Usuario).where(Usuario.email == email)).one()
-    session.close()
     if user is None:
         return None
     return user
