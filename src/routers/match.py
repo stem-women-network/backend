@@ -5,6 +5,7 @@ from src.controllers.match_controller import (
     PedidoMentoriaCreate,
     MatchRequest,
     MatchResponse,
+    MentorSuggestion,
 )
 from src.database import SessionDep
 
@@ -39,3 +40,13 @@ def update_mentorship_request(id_pedidos_mentoria: int, estado_pedido: str, sess
 @router.delete("/pedidos/{id_pedidos_mentoria}")
 def delete_mentorship_request(id_pedidos_mentoria: int, session: SessionDep):
     return MatchController.delete_mentorship_request(id_pedidos_mentoria, session)
+
+
+@router.get("/suggestions/mentor/{id_mentora}", response_model=list[MentorSuggestion])
+def get_suggested_mentees(id_mentora: int, session: SessionDep, top_k: int | None = 5, min_score: int | None = 1):
+    return MatchController.get_suggested_mentees_for_mentor(id_mentora, session, top_k=top_k, min_score=min_score)
+
+
+@router.post("/suggestions/mentor/{id_mentora}/{id_mentorada}", response_model=PedidoMentoriaResponse)
+def mentor_create_request(id_mentora: int, id_mentorada: int, session: SessionDep):
+    return MatchController.mentor_create_request(id_mentora, id_mentorada, session)

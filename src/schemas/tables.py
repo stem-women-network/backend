@@ -19,7 +19,6 @@ class Usuario(SQLModel, table=True):
 
     
 class UniversidadeInstituicao(SQLModel, table=True):
-    __tablename__ : str = "universidade_instituicao"
     id_universidade_instituicao : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     nome_instituicao : str = Field(max_length=100)
 
@@ -61,6 +60,10 @@ class Mentorada(SQLModel, table=True):
     termo_assinado : bytes | None = Field()
     conta_ativa : bool = Field(default = False)
 
+    # New fields for matching selections (list of strings)
+    hobbies : list[str] | None = Field(sa_column=Column(ARRAY(String)))
+    competencias_interesse : list[str] | None = Field(sa_column=Column(ARRAY(String)))
+
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
     
@@ -85,6 +88,9 @@ class Mentora(SQLModel, table=True):
     como_ficou_sabendo : str = Field()
     termo_assinado : bytes | None = Field()
     conta_ativa : bool = Field(default=False)
+
+    # New hobby field to match with mentees
+    hobbies : list[str] | None = Field(sa_column=Column(ARRAY(String)))
     
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
@@ -98,7 +104,6 @@ class Mentora(SQLModel, table=True):
     
 
 class PedidosMentoria(SQLModel, table=True):
-    __tablename__ : str = "pedidos_mentoria"
     id_pedidos_mentoria : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     estado_pedido : str = Field(max_length=10)
     ano_pedido : int = Field(max_digits=4)
@@ -125,7 +130,6 @@ class Mentoria(SQLModel, table=True):
 
     
 class ProximoEncontro(SQLModel, table=True):
-    __tablename__ : str = "proximo_encontro"
     id_proximo_encontro :  uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     data_sugerida : datetime = Field()
     topico_sugerido : str = Field(max_length=100)
