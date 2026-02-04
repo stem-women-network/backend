@@ -9,24 +9,29 @@ from src.schemas.tables import (
 from pydantic import BaseModel
 
 
+from datetime import datetime
+
+
 class PedidoMentoriaResponse(BaseModel):
     id_pedidos_mentoria: str
     estado_pedido: str
-    ano_pedido: int
+    data_pedido: datetime
     id_mentora: str
     id_mentorada: str
+    objetivo_mentoria: str
 
 
 class PedidoMentoriaCreate(BaseModel):
     id_mentora: str
     id_mentorada: str
-    ano_pedido: int
+    data_pedido: datetime | None = None
 
 
 class MatchRequest(BaseModel):
     id_mentorada: int
-    top_k: int | None = 3  # number of top mentor suggestions to create pedidos for
-    min_score: int | None = 1  # minimum score required to consider a match
+    top_k: int | None = 3
+    min_score: int | None = 1
+    same_university: bool | None = False
 
 
 class MatchItem(BaseModel):
@@ -49,7 +54,6 @@ class MentorSuggestion(BaseModel):
 class MatchResponse(BaseModel):
     pedidos_criados: list[str]
     matches: list[MatchItem]
-    mensagem: str
 
 
 class MatchController:
@@ -67,49 +71,37 @@ class MatchController:
         return set(t for t in tokens if t)
 
     @staticmethod
-    def _score_by_text(areas: list[str], text: str) -> int:
-        """Score overlap between mentor areas and a text field (course or objective)"""
-        text_str = MatchController._normalize_text(text)
-        text_tokens = MatchController._tokenize(text)
+    def _score_match(
+        mentor_areas: list[str],
+        mentor_hobbies: list[str],
+        mentee_competencias: list[str],
+        mentee_hobbies: list[str],
+        mentee_curso: str,
+    ) -> tuple[int, list[str], list[str]]:
+        """
+        - mesmas competencias => 5 points cada
+        - mesmo curso => 3 points
+        - mesmos hobbies => 1 point cada
+        """
+        # TODO mudar pontuação
+        shared_comp = [c for c in (mentee_competencias or []) if c in (mentor_areas or [])]
+        shared_hob = [h for h in (mentee_hobbies or []) if h in (mentor_hobbies or [])]
 
         score = 0
-        for area in areas or []:
-            area_norm = MatchController._normalize_text(area)
-            if not area_norm:
-                continue
-            if area_norm in text_str:
-                score += 3
-                continue
-            area_tokens = MatchController._tokenize(area_norm)
-            common = area_tokens.intersection(text_tokens)
-            score += len(common)
-        return score
-
-    @staticmethod
-    def _score_match(areas: list[str], curso: str, objetivo: str) -> int:
-        """Combine course (higher weight) and objective into final score"""
-        course_score = MatchController._score_by_text(areas, curso)
-        objetivo_score = MatchController._score_by_text(areas, objetivo)
-        return course_score * 2 + objetivo_score
+        score += 5 * len(shared_comp)
+        score += 1 * len(shared_hob)
+        if mentee_curso and mentee_curso in (mentor_areas or []):
+            score += 3
+        return score, shared_comp, shared_hob
 
     @staticmethod
     def create_match(request: MatchRequest, session: Session) -> MatchResponse:
-        """Create pending mentorship requests (pedidos) for mentors to accept.
-
-        Rules:
-        - Do not create requests if mentee or mentor already has an active mentorship or pending pedido.
-        - Only create PedidosMentoria (estado_pedido='pendente') so mentors can accept (mentor-only action).
-        """
-        from datetime import datetime
-
-        # Get mentorada
         mentorada = session.get(Mentorada, request.id_mentorada)
         if not mentorada:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Mentorada not found"
             )
 
-        # Prevent mentee from having more than one match
         existing_active = session.exec(
             select(Mentoria).where(
                 Mentoria.id_mentorada == mentorada.id_mentorada,
@@ -129,9 +121,17 @@ class MatchController:
                 detail="Mentorada already has an active or pending mentorship",
             )
 
-        statement = select(Mentora).where(
-            Mentora.conta_ativa == True,
-        )
+        # TODO precisa ser da mesma faculdade?
+        if request.same_university:
+            statement = select(Mentora).where(
+                Mentora.id_universidade_instituicao
+                == mentorada.id_universidade_instituicao,
+                Mentora.conta_ativa == True,
+            )
+        else:
+            statement = select(Mentora).where(
+                Mentora.conta_ativa == True,
+            )
         mentoras_disponiveis = session.exec(statement).all()
 
         available_mentors = []
@@ -158,22 +158,78 @@ class MatchController:
                 detail="No available mentors found",
             )
 
+        # TODO atualmente as areas de atuacao da mentora e
+        # competencias de interesse da mentorada devem ser exatamente iguais
+        scored: list[tuple[int, Mentora, list[str], list[str]]] = []
+        for mentora in available_mentors:
+            score, shared_comp, shared_hob = MatchController._score_match(
+                mentora.areas_atuacao or [],
+                mentora.hobbies or [],
+                mentorada.competencias_interesse or [],
+                mentorada.hobbies or [],
+                mentorada.curso_area_stem or "",
+            )
+            scored.append((score, mentora, shared_comp, shared_hob))
+
+        # x[0] é o score
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        min_score = request.min_score if request.min_score is not None else 1
+        top_k = request.top_k if request.top_k is not None else 3
+
+        # score, mentora, shared_comp, shared_hob
+        selected = [ (s, m, sc, sh) for s, m, sc, sh in scored if s >= min_score ]
+
+        # TODO fazer ter pelo menos um match?
+        if not selected and scored:
+            selected = [scored[0]]
+
+        selected = selected[:top_k]
+
+
+        pedidos_criados: list[str] = []
+        matches: list[MatchItem] = []
+        current_time = datetime.now()
+        for score, mentora, shared_comp, shared_hob in selected:
+            pedido = PedidosMentoria(
+                estado_pedido="pendente",
+                data_pedido=current_time,
+                id_mentora=mentora.id_mentora,
+                id_mentorada=mentorada.id_mentorada,
+            )
+            session.add(pedido)
+            session.commit()
+            session.refresh(pedido)
+            pedidos_criados.append(str(pedido.id_pedidos_mentoria))
+            matches.append(
+                MatchItem(
+                    id_mentora=str(mentora.id_mentora),
+                    id_pedido=str(pedido.id_pedidos_mentoria),
+                    score=score,
+                    objetivo_mentoria=mentorada.objetivo_mentoria or "",
+                    curso_mentorada=mentorada.curso_area_stem or "",
+                )
+            )
+
+        return MatchResponse(
+            pedidos_criados=pedidos_criados,
+            matches=matches,
+        )
 
     @staticmethod
     def create_mentorship_request(
         data: PedidoMentoriaCreate, session: Session
     ) -> PedidosMentoria:
-        """Create a mentorship request"""
         mentora = session.get(Mentora, data.id_mentora)
         mentorada = session.get(Mentorada, data.id_mentorada)
 
         if not mentora:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Mentor not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Mentora não encontrada"
             )
         if not mentorada:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Mentorada not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Mentorada não encontrada"
             )
 
         # Ensure neither mentor nor mentee already has an active or pending match
@@ -205,14 +261,14 @@ class MatchController:
         if mentor_active or mentor_pending or mentee_active or mentee_pending:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Mentor or mentored already has an active or pending mentorship",
+                detail="Mentora ou mentorada já tem um match ativo",
             )
 
         import uuid
 
         pedido = PedidosMentoria(
             estado_pedido="pendente",
-            ano_pedido=data.ano_pedido,
+            data_pedido=data.data_pedido or datetime.now(),
             id_mentora=uuid.UUID(data.id_mentora),
             id_mentorada=uuid.UUID(data.id_mentorada),
         )
@@ -227,15 +283,18 @@ class MatchController:
         session: Session,
         top_k: int | None = 5,
         min_score: int | None = 1,
+        same_university: bool | None = False,
     ) -> list["MentorSuggestion"]:
-        """Return mentees compatible with a mentor so the mentor can accept/ask for mentorships."""
+        """
+        Retorna mentoradas compatíveis com uma mentora para que a mentora possa aceitar/solicitar mentorias.
+        """
         mentor = session.get(Mentora, id_mentora)
         if not mentor:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Mentora not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Mentora não encontrada"
             )
 
-        # Do not show suggestions if mentor already has active or pending match
+        # Não sugere mentoradas para mentoras que já tenham um match ativo ou pendente
         mentor_active = session.exec(
             select(Mentoria).where(
                 Mentoria.id_mentora == mentor.id_mentora,
@@ -251,16 +310,20 @@ class MatchController:
         if mentor_active or mentor_pending:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Mentora already has an active or pending mentorship",
+                detail="Mentora já tem um match ativo ou pendente",
             )
 
-        # Find active mentees (no university restriction)
-        statement = select(Mentorada).where(
-            Mentorada.conta_ativa == True,
-        )
+        if same_university:
+            statement = select(Mentorada).where(
+                Mentorada.id_universidade_instituicao == mentor.id_universidade_instituicao,
+                Mentorada.conta_ativa == True,
+            )
+        else:
+            statement = select(Mentorada).where(
+                Mentorada.conta_ativa == True,
+            )
         possible_mentees = session.exec(statement).all()
 
-        # Filter out mentees who already have active/pending
         filtered = []
         for m in possible_mentees:
             mentee_active = session.exec(
@@ -282,47 +345,29 @@ class MatchController:
         if not filtered:
             return []
 
-        # Score each mentee
-        scored: list[tuple[int, Mentorada]] = []
+        # Sistema de pontuação
+        scored: list[tuple[int, Mentorada, list[str], list[str]]] = []
         for m in filtered:
-            score = 0
-            # expertise (areas_atuacao) vs mentee competencias_interesse -> strong
-            for exp in mentor.areas_atuacao or []:
-                if not exp:
-                    continue
-                if exp in (m.competencias_interesse or []):
-                    score += 3
-                # partial token overlap
-                exp_tokens = MatchController._tokenize(exp)
-                comp_tokens = MatchController._tokenize(" ".join(m.competencias_interesse or []))
-                score += len(exp_tokens.intersection(comp_tokens))
-                # course match
-                if exp.lower() in (m.curso_area_stem or "").lower():
-                    score += 2
-            # hobbies overlap
-            hobby_overlap = set(mentor.hobbies or []).intersection(set(m.hobbies or []))
-            score += len(hobby_overlap)
-            scored.append((score, m))
+            score, shared_comp, shared_hob = MatchController._score_match(
+                mentor.areas_atuacao or [],
+                mentor.hobbies or [],
+                m.competencias_interesse or [],
+                m.hobbies or [],
+                m.curso_area_stem or "",
+            )
+            scored.append((score, m, shared_comp, shared_hob))
 
         scored.sort(key=lambda x: x[0], reverse=True)
 
         min_score = min_score if min_score is not None else 1
         top_k = top_k if top_k is not None else 5
-        selected = [(s, mm) for s, mm in scored if s >= min_score]
+        selected = [(s, mm, sc, sh) for s, mm, sc, sh in scored if s >= min_score]
         if not selected and scored:
             selected = [scored[0]]
         selected = selected[:top_k]
 
         results: list[MentorSuggestion] = []
-        for score, mm in selected:
-            shared_comp = []
-            shared_hob = []
-            # compute shared lists
-            if mm.competencias_interesse:
-                shared_comp = [c for c in (mm.competencias_interesse or []) if c in (mentor.areas_atuacao or [])]
-            if mm.hobbies:
-                shared_hob = [h for h in (mm.hobbies or []) if h in (mentor.hobbies or [])]
-
+        for score, mm, shared_comp, shared_hob in selected:
             results.append(
                 MentorSuggestion(
                     id_mentorada=str(mm.id_mentorada),
@@ -344,7 +389,7 @@ class MatchController:
         mentorada = session.get(Mentorada, id_mentorada)
         if not mentora or not mentorada:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Mentora or Mentorada not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Mentora ou Mentorada não encontrada"
             )
 
         # Ensure neither has active/pending
@@ -379,11 +424,9 @@ class MatchController:
                 detail="Mentor or mentored already has an active or pending mentorship",
             )
 
-        from datetime import datetime
-
         pedido = PedidosMentoria(
             estado_pedido="pendente",
-            ano_pedido=datetime.now().year,
+            data_pedido=datetime.now(),
             id_mentora=mentora.id_mentora,
             id_mentorada=mentorada.id_mentorada,
         )
@@ -395,18 +438,41 @@ class MatchController:
     @staticmethod
     def get_mentorship_request(
         id_pedidos_mentoria: int, session: Session
-    ) -> PedidosMentoria:
+    ) -> PedidoMentoriaResponse:
         pedido = session.get(PedidosMentoria, id_pedidos_mentoria)
         if not pedido:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Pedido não encontrado"
             )
-        return pedido
+        mentorada = session.get(Mentorada, pedido.id_mentorada)
+        objetivo = mentorada.objetivo_mentoria if mentorada else ""
+        return PedidoMentoriaResponse(
+            id_pedidos_mentoria=str(pedido.id_pedidos_mentoria),
+            estado_pedido=pedido.estado_pedido,
+            data_pedido=pedido.data_pedido,
+            id_mentora=str(pedido.id_mentora),
+            id_mentorada=str(pedido.id_mentorada),
+            objetivo_mentoria=objetivo,
+        )
 
     @staticmethod
-    def list_mentorship_requests(session: Session) -> list[PedidosMentoria]:
+    def list_mentorship_requests(session: Session) -> list[PedidoMentoriaResponse]:
         pedidos = list(session.exec(select(PedidosMentoria)).all())
-        return pedidos
+        results: list[PedidoMentoriaResponse] = []
+        for pedido in pedidos:
+            mentorada = session.get(Mentorada, pedido.id_mentorada)
+            objetivo = mentorada.objetivo_mentoria if mentorada else ""
+            results.append(
+                PedidoMentoriaResponse(
+                    id_pedidos_mentoria=str(pedido.id_pedidos_mentoria),
+                    estado_pedido=pedido.estado_pedido,
+                    data_pedido=pedido.data_pedido,
+                    id_mentora=str(pedido.id_mentora),
+                    id_mentorada=str(pedido.id_mentorada),
+                    objetivo_mentoria=objetivo,
+                )
+            )
+        return results
 
     @staticmethod
     def update_mentorship_request(
