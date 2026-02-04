@@ -106,7 +106,7 @@ class Mentora(SQLModel, table=True):
 class PedidosMentoria(SQLModel, table=True):
     id_pedidos_mentoria : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     estado_pedido : str = Field(max_length=10)
-    ano_pedido : int = Field(max_digits=4)
+    data_pedido : datetime = Field(default_factory=datetime.now)
     
     id_mentora : uuid.UUID = Field(foreign_key="mentora.id_mentora")
     id_mentorada : uuid.UUID = Field(foreign_key="mentorada.id_mentorada")
