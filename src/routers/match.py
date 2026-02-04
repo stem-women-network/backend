@@ -27,7 +27,7 @@ def get_mentorship_request(id_pedidos_mentoria: int, session: SessionDep):
     return MatchController.get_mentorship_request(id_pedidos_mentoria, session)
 
 
-@router.get("/pedidos/")
+@router.get("/pedidos/", response_model=list[PedidoMentoriaResponse])
 def list_mentorship_requests(session: SessionDep):
     return MatchController.list_mentorship_requests(session)
 
@@ -43,8 +43,8 @@ def delete_mentorship_request(id_pedidos_mentoria: int, session: SessionDep):
 
 
 @router.get("/suggestions/mentor/{id_mentora}", response_model=list[MentorSuggestion])
-def get_suggested_mentees(id_mentora: int, session: SessionDep, top_k: int | None = 5, min_score: int | None = 1):
-    return MatchController.get_suggested_mentees_for_mentor(id_mentora, session, top_k=top_k, min_score=min_score)
+def get_suggested_mentees(id_mentora: int, session: SessionDep, top_k: int | None = 5, min_score: int | None = 1, same_university: bool | None = False):
+    return MatchController.get_suggested_mentees_for_mentor(id_mentora, session, top_k=top_k, min_score=min_score, same_university=same_university)
 
 
 @router.post("/suggestions/mentor/{id_mentora}/{id_mentorada}", response_model=PedidoMentoriaResponse)
