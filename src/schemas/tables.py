@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import EmailStr
 from sqlmodel import ARRAY, Column, Field, Relationship, Session, SQLModel, create_engine, table, String, JSON
 import uuid
+from sqlalchemy import VARCHAR
 
 class Usuario(SQLModel, table=True):
     id_usuario : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -19,7 +20,6 @@ class Usuario(SQLModel, table=True):
 
     
 class UniversidadeInstituicao(SQLModel, table=True):
-    __tablename__ : str = "universidade_instituicao"
     id_universidade_instituicao : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     nome_instituicao : str = Field(max_length=100)
 
@@ -61,6 +61,10 @@ class Mentorada(SQLModel, table=True):
     termo_assinado : bytes | None = Field()
     conta_ativa : bool = Field(default = False)
 
+    # New fields for matching selections (list of strings)
+    hobbies : list[str] | None = Field(sa_column=Column(ARRAY(String)))
+    competencias_interesse : list[str] | None = Field(sa_column=Column(ARRAY(String)))
+
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
     
@@ -83,6 +87,9 @@ class Mentora(SQLModel, table=True):
     como_ficou_sabendo : str = Field()
     termo_assinado : bytes | None = Field()
     conta_ativa : bool = Field(default=False)
+
+    # New hobby field to match with mentees
+    hobbies : list[str] | None = Field(sa_column=Column(ARRAY(String)))
     
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
@@ -93,10 +100,9 @@ class Mentora(SQLModel, table=True):
     mentorias : list["Mentoria"] = Relationship(back_populates="mentora")
 
 class PedidosMentoria(SQLModel, table=True):
-    __tablename__ : str = "pedidos_mentoria"
     id_pedidos_mentoria : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     estado_pedido : str = Field(max_length=10)
-    ano_pedido : int = Field(max_digits=4)
+    data_pedido : datetime = Field(default_factory=datetime.now)
     
     id_mentora : uuid.UUID = Field(foreign_key="mentora.id_mentora")
     id_mentorada : uuid.UUID = Field(foreign_key="mentorada.id_mentorada")
@@ -128,7 +134,6 @@ class Mentoria(SQLModel, table=True):
     mensagens : list["MensagemMentoria"] = Relationship(back_populates="mentoria")
     
 class ProximoEncontro(SQLModel, table=True):
-    __tablename__ : str = "proximo_encontro"
     id_proximo_encontro :  uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     data_sugerida : datetime = Field()
     topico_sugerido : str = Field(max_length=100)
