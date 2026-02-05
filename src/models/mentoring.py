@@ -1,11 +1,13 @@
 import enum
 from typing import Sequence
+from uuid import UUID
 
-from sqlmodel import select, Session
+from sqlmodel import select, Session, func
 
 from src.models.login import TipoUsuario, get_current_user, get_tipo_usuario
-from src.schemas.tables import MensagemMentoria, Mentora, Mentorada, Mentoria, Usuario
+from src.schemas.tables import MaterialMentoria, MensagemMentoria, Mentora, Mentorada, Mentoria, Usuario
 from src.database import engine
+import base64
 
 class MentoringStatus(enum.StrEnum):
     ATIVA = enum.auto()
@@ -22,7 +24,7 @@ class MentoringModel:
             if user is None:
                 return None
             user_type = get_tipo_usuario(user)
-            condition = False
+
             if(user_type == TipoUsuario.MENTORA):
                 mentor = user.mentoras[0]
                 mentor_id = mentor.id_mentora
@@ -50,3 +52,139 @@ class MentoringModel:
         except Exception as e:
             print(e)
             return None
+
+    @classmethod
+    def send_file(cls, file : bytes, title: str, file_type : str, token: str, mentee_id: str):
+        session = Session(engine)
+        try:
+            user = get_current_user(token, session)
+            if user is None:
+                return None
+            mentor = user.mentoras[0]
+            mentoring_id = session.exec(
+                select(Mentoria.id_mentoria)\
+                .where(Mentoria.id_mentora==mentor.id_mentora)\
+                .where(Mentoria.id_mentorada==mentee_id)
+            ).one()
+            material = MaterialMentoria(
+                id_mentoria= mentoring_id,
+                tipo_material= file_type,
+                titulo_material= title,
+                arquivo= base64.b64encode(file)
+            )
+            session.add(material)
+            session.commit()
+        except Exception as e:
+            print(e)
+        finally:
+            session.close()
+
+    @classmethod
+    def get_files(cls, token: str, mentee_id: str):
+        session = Session(engine)
+        try:
+            user = get_current_user(token, session)
+            if user is None:
+                return None
+            mentor = user.mentoras[0]
+            mentoring_id = session.exec(
+                select(Mentoria.id_mentoria)\
+                .where(Mentoria.id_mentora==mentor.id_mentora)\
+                .where(Mentoria.id_mentorada==mentee_id)
+            ).one_or_none()
+            if mentoring_id is None:
+                return None
+            files = session.exec(
+                select(
+                       MaterialMentoria.id_arquivo_mentoria,
+                       MaterialMentoria.titulo_material,
+                       MaterialMentoria.tipo_material,
+                       func.length(MaterialMentoria.arquivo),
+                       )\
+                .where(MaterialMentoria.id_mentoria == mentoring_id)
+            ).all()
+            return files
+        except Exception as e:
+            print(e)
+        finally:
+            session.close()
+
+    @classmethod
+    def download_file(cls, token: str, file_id: str):
+        session = Session(engine)
+        try:
+            user = get_current_user(token, session)
+            if user is None:
+                return None
+            user_type = get_tipo_usuario(user)
+            result = ""
+            if user_type == TipoUsuario.MENTORA:
+                mentor = user.mentoras[0]
+                result = session.exec(
+                    select(
+                        MaterialMentoria.arquivo
+                    )\
+                    .where(
+                        MaterialMentoria.id_arquivo_mentoria == file_id
+                    )\
+                    .join(Mentoria)\
+                    .join(Mentora)\
+                    .where(
+                        Mentora.id_mentora == mentor.id_mentora
+                    )
+                ).one_or_none()
+            elif user_type == TipoUsuario.MENTORADA:
+                mentee = user.mentoradas[0]
+                result = session.exec(
+                    select(
+                        MaterialMentoria.arquivo
+                    )\
+                    .where(
+                        MaterialMentoria.id_arquivo_mentoria == file_id
+                    )\
+                    .join(Mentoria)\
+                    .join(Mentorada)\
+                    .where(
+                        Mentorada.id_mentorada == mentee.id_mentorada
+                    )
+                ).one_or_none()
+            return result
+        except Exception as e:
+            print(e)
+        finally:
+            session.close()
+
+    @classmethod
+    def delete_file(cls,token: str, file_id: str):
+        session = Session(engine)
+        try:
+            user = get_current_user(token, session)
+            if user is None:
+                return None
+            user_type = get_tipo_usuario(user)
+            result = ""
+            if user_type == TipoUsuario.MENTORA:
+                mentor = user.mentoras[0]
+                result = session.exec(
+                    select(
+                        MaterialMentoria
+                    )\
+                    .where(
+                        MaterialMentoria.id_arquivo_mentoria == file_id
+                    )\
+                    .join(Mentoria)\
+                    .join(Mentora)\
+                    .where(
+                        Mentora.id_mentora == mentor.id_mentora
+                    )
+                ).one_or_none()
+                if result is None:
+                    return None
+                session.delete(result)
+                session.commit()
+            session.close()
+            return None
+        except Exception as e:
+            print(e)
+        finally:
+            session.close()
