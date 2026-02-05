@@ -73,9 +73,21 @@ class CadastroMentorada(CadastroModel):
 class CadastroMentora(CadastroModel):
     formacao : str
     cargo_atual : str
-    areas_atuacao : list[str]
-    como_ficou_sabendo : str
-    
+    area_atuacao : str
+    cidade : str
+    estado: str
+    etnia : str
+    genero : str
+    foi_mentora : bool
+    foi_mentorada : bool
+    perfil_interesse : str
+    foco_mentoria : list[str]
+    idiomas : list[str]
+    competencias : list[str]
+    hobbies : list[str]
+    disponibilidade : str
+    ajuda : str
+    bio : str | None
     
 class Cadastro:
     @classmethod
@@ -141,14 +153,26 @@ class Cadastro:
             session.add(usuario)
             mentora = Mentora(
                 foto_perfil=None,
-                cargo_atual=cadastro.cargo_atual,
-                areas_atuacao=cadastro.areas_atuacao,
-                linkedin=cadastro.linkedin,
+                linkedin=cadastro.linkedin if cadastro.linkedin is not None else None,
                 formacao=cadastro.formacao,
+                cargo_atual=cadastro.cargo_atual,
+                area_atuacao=cadastro.area_atuacao,
+                cidade=cadastro.cidade,
+                estado=cadastro.estado,
+                etnia=cadastro.etnia,
+                genero=cadastro.genero,
+                foi_mentora=cadastro.foi_mentora,
+                foi_mentorada=cadastro.foi_mentorada,
+                perfil_interesse=cadastro.perfil_interesse,
+                foco_mentoria=cadastro.foco_mentoria,
+                idiomas=cadastro.idiomas,
+                competencias=cadastro.competencias,
+                hobbies=cadastro.hobbies,
+                disponibilidade=cadastro.disponibilidade,
+                ajuda=cadastro.ajuda,
+                bio=cadastro.bio,
                 id_usuario=usuario.id_usuario,
                 id_universidade_instituicao=None,
-                disponibilidade=None,
-                como_ficou_sabendo=cadastro.como_ficou_sabendo.lower(),
                 termo_assinado=None
             )
             session.add(mentora)
