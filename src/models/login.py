@@ -56,17 +56,19 @@ class CadastroModel(BaseModel):
     linkedin : str | None
 
 class CadastroMentorada(CadastroModel):
+    genero: str
+    etnia : str
+    universidade_instituicao : str
+    area_stem : str
     curso : str
     ano_curso : int
     semestre : int
-    genero: str
-    etnia : str
-    expectativas : str
-    compartilhar_experiencias : str
-    desenvolver_competencias : str
-    foi_mentorada : bool
-    hobbies_interesses : str
-    comentarios: str
+    situacao_atual : str
+    foco_mentoria : str
+    idiomas : list[str]
+    desenvolver_competencias : list[str]
+    hobbies_interesses : list[str]
+    disponibilidade : str
 
 class CadastroMentora(CadastroModel):
     formacao : str
@@ -94,16 +96,20 @@ class Cadastro:
             session.add(usuario)
             mentorada = Mentorada(
                 foto_perfil = None,
-                id_usuario = usuario.id_usuario,
-                ano_curso = cadastro.ano_curso,
-                semestre = cadastro.semestre,
-                curso_area_stem = cadastro.curso,
-                disponibilidade = None,
-                objetivo_mentoria = cadastro.desenvolver_competencias,
-                expectativas=cadastro.expectativas,
+                linkedin = cadastro.linkedin if cadastro.linkedin is not None else None,
                 genero = Genero(cadastro.genero.lower()),
                 etnia = Etnia(cadastro.etnia.lower()),
-                linkedin = None,
+                area_stem = cadastro.area_stem,
+                curso = cadastro.curso,
+                ano_curso = cadastro.ano_curso,
+                semestre = cadastro.semestre,
+                situacao_atual = cadastro.situacao_atual,
+                foco_mentoria = cadastro.foco_mentoria,
+                idiomas = cadastro.idiomas,
+                competencias_interesse = cadastro.desenvolver_competencias,
+                hobbies = cadastro.hobbies_interesses,
+                disponibilidade = cadastro.disponibilidade,
+                id_usuario = usuario.id_usuario,
                 id_universidade_instituicao=None,
                 termo_assinado = None
             )

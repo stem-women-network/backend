@@ -20,6 +20,7 @@ class Usuario(SQLModel, table=True):
 
     
 class UniversidadeInstituicao(SQLModel, table=True):
+    __tablename__ : str = "universidade_instituicao"
     id_universidade_instituicao : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     nome_instituicao : str = Field(max_length=100)
 
@@ -50,14 +51,16 @@ class Mentorada(SQLModel, table=True):
     id_mentorada : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     foto_perfil : bytes | None = Field()
     linkedin : str | None = Field(max_length=100)
-    curso_area_stem : str = Field(max_length=100)
+    genero : str = Field()
+    etnia : str = Field()
+    area_stem : str = Field()
+    curso : str = Field()
     ano_curso : int = Field(max_digits=4)
     semestre : int = Field(max_digits=2)
-    objetivo_mentoria : str = Field(max_length=200)
-    disponibilidade : int | None = Field(max_digits=3)
-    etnia : str = Field()
-    genero : str = Field()
-    expectativas : str = Field(max_length=300)
+    situacao_atual : str = Field()
+    foco_mentoria : str = Field()
+    idiomas : list[str] = Field(sa_column=Column(ARRAY(String)))
+    disponibilidade : str = Field()
     termo_assinado : bytes | None = Field()
     conta_ativa : bool = Field(default = False)
 
