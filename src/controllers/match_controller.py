@@ -72,7 +72,7 @@ class MatchController:
 
     @staticmethod
     def _score_match(
-        mentor_areas: list[str],
+        mentor_areas: str,
         mentor_hobbies: list[str],
         mentee_competencias: list[str],
         mentee_hobbies: list[str],
@@ -134,7 +134,7 @@ class MatchController:
             )
         mentoras_disponiveis = session.exec(statement).all()
 
-        available_mentors = []
+        available_mentors : list[Mentora] = []
         for mentora in mentoras_disponiveis:
             mentor_active = session.exec(
                 select(Mentoria).where(
@@ -163,11 +163,11 @@ class MatchController:
         scored: list[tuple[int, Mentora, list[str], list[str]]] = []
         for mentora in available_mentors:
             score, shared_comp, shared_hob = MatchController._score_match(
-                mentora.areas_atuacao or [],
+                mentora.area_atuacao or "",
                 mentora.hobbies or [],
                 mentorada.competencias_interesse or [],
                 mentorada.hobbies or [],
-                mentorada.curso_area_stem or "",
+                mentorada.curso or "",
             )
             scored.append((score, mentora, shared_comp, shared_hob))
 
@@ -206,8 +206,8 @@ class MatchController:
                     id_mentora=str(mentora.id_mentora),
                     id_pedido=str(pedido.id_pedidos_mentoria),
                     score=score,
-                    objetivo_mentoria=mentorada.objetivo_mentoria or "",
-                    curso_mentorada=mentorada.curso_area_stem or "",
+                    objetivo_mentoria=mentorada.foco_mentoria or "",
+                    curso_mentorada=mentorada.curso or "",
                 )
             )
 
@@ -324,7 +324,7 @@ class MatchController:
             )
         possible_mentees = session.exec(statement).all()
 
-        filtered = []
+        filtered : list[Mentorada] = []
         for m in possible_mentees:
             mentee_active = session.exec(
                 select(Mentoria).where(
@@ -349,11 +349,11 @@ class MatchController:
         scored: list[tuple[int, Mentorada, list[str], list[str]]] = []
         for m in filtered:
             score, shared_comp, shared_hob = MatchController._score_match(
-                mentor.areas_atuacao or [],
+                mentor.area_atuacao or "",
                 mentor.hobbies or [],
                 m.competencias_interesse or [],
                 m.hobbies or [],
-                m.curso_area_stem or "",
+                m.curso or "",
             )
             scored.append((score, m, shared_comp, shared_hob))
 
@@ -372,8 +372,8 @@ class MatchController:
                 MentorSuggestion(
                     id_mentorada=str(mm.id_mentorada),
                     score=score,
-                    objetivo_mentoria=mm.objetivo_mentoria or "",
-                    curso_mentorada=mm.curso_area_stem or "",
+                    objetivo_mentoria=mm.foco_mentoria,
+                    curso_mentorada=mm.curso or "",
                     shared_competencias=shared_comp,
                     shared_hobbies=shared_hob,
                 )
@@ -445,7 +445,7 @@ class MatchController:
                 status_code=status.HTTP_404_NOT_FOUND, detail="Pedido não encontrado"
             )
         mentorada = session.get(Mentorada, pedido.id_mentorada)
-        objetivo = mentorada.objetivo_mentoria if mentorada else ""
+        objetivo = mentorada.foco_mentoria if mentorada else ""
         return PedidoMentoriaResponse(
             id_pedidos_mentoria=str(pedido.id_pedidos_mentoria),
             estado_pedido=pedido.estado_pedido,
@@ -461,7 +461,7 @@ class MatchController:
         results: list[PedidoMentoriaResponse] = []
         for pedido in pedidos:
             mentorada = session.get(Mentorada, pedido.id_mentorada)
-            objetivo = mentorada.objetivo_mentoria if mentorada else ""
+            objetivo = mentorada.foco_mentoria if mentorada else ""
             results.append(
                 PedidoMentoriaResponse(
                     id_pedidos_mentoria=str(pedido.id_pedidos_mentoria),
@@ -510,6 +510,9 @@ class MatchController:
                 estado_mentoria="ativa",
                 avaliacao_mentora=None,
                 avaliacao_mentorada=None,
+                ano_mentoria = datetime.now().year,
+                comeco_mentoria = datetime.now(),
+                fim_mentoria = None,
                 nota_mentora=None,
                 nota_mentorada=None,
                 id_mentora=pedido.id_mentora,
