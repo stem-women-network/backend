@@ -1,11 +1,7 @@
-from uuid import UUID
-from fastapi import APIRouter, Body, Form, HTTPException, Header, Request, Response, UploadFile, File
-from fastapi.datastructures import Headers
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import APIRouter, Form, HTTPException, Header, Request, Response, File
 from pydantic import BaseModel
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 
-from src.models.login import get_current_user
 from src.models.mentoring import MentoringModel
 import base64
 

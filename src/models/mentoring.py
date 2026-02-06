@@ -1,11 +1,10 @@
 import enum
 from typing import Sequence
-from uuid import UUID
 
 from sqlmodel import select, Session, func
 
 from src.models.login import TipoUsuario, get_current_user, get_tipo_usuario
-from src.schemas.tables import MaterialMentoria, MensagemMentoria, Mentora, Mentorada, Mentoria, Usuario
+from src.schemas.tables import MaterialMentoria, MensagemMentoria, Mentora, Mentorada, Mentoria
 from src.database import engine
 import base64
 

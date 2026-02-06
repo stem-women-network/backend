@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from src.models.login import Login, LoginModel, Cadastro, CadastroMentora, CadastroMentorada
 
 

@@ -1,6 +1,5 @@
 from typing import Annotated
-import os
-from dotenv import dotenv_values, load_dotenv
+from dotenv import dotenv_values
 from fastapi import Depends
 from sqlmodel import Session, create_engine
 from .schemas.tables import *

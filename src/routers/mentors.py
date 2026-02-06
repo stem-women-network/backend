@@ -1,20 +1,15 @@
-from typing import List, Literal
-from fastapi import APIRouter, HTTPException, Request, Response, status
-from sqlalchemy.engine import create
-from sqlmodel import Session, select
+from typing import List
+from fastapi import APIRouter, HTTPException, Request, Response
 from starlette.status import HTTP_200_OK, HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
-from src.models.login import get_current_user, get_tipo_usuario
 from src.models.mentor import MentorModel
-from src.schemas.tables import Mentora, Usuario, UniversidadeInstituicao
 from src.database import SessionDep
-from pydantic import BaseModel, create_model
+from pydantic import create_model
 from src.controllers.mentor_controller import (
     MentorController,
     MentorResponse,
     MentorCreate,
     MentorUpdate,
 )
-from src.database import SessionDep
 
 router = APIRouter()
 

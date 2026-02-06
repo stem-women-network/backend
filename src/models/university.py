@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from sqlmodel import Date, Session, select
+from sqlmodel import Session
 from src.database import engine
 from src.schemas.tables import UniversidadeInstituicao
 

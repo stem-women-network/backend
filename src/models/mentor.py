@@ -2,8 +2,8 @@ from typing import Literal
 from uuid import UUID
 from sqlmodel import Session, desc, select
 from src.database import engine
-from src.models.login import TipoUsuario, get_current_user, get_tipo_usuario
-from src.schemas.tables import Mentora, Mentorada, Mentoria 
+from src.models.login import get_current_user
+from src.schemas.tables import Mentora, Mentoria 
 
 
 class MentorModel:
