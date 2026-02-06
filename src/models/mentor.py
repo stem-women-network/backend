@@ -34,7 +34,7 @@ class MentorModel:
             response : dict[Literal["name","course","semester","progress", "status", "id"],str | int | UUID] = {
                 "id" : id_mentee,
                 "name" : mentee_user.nome_completo,
-                "course" : mentee.curso_area_stem,
+                "course" : mentee.curso,
                 "semester" : mentee.semestre,
                 "progress" : mentoring.progresso_mentorada,
                 "status" : mentoring.estado_mentoria
@@ -71,7 +71,7 @@ class MentorModel:
                 mentee = mentoring.mentorada
                 id_mentee = mentee.id_mentorada
                 name = mentee.usuario.nome_completo
-                course = mentee.curso_area_stem
+                course = mentee.curso
                 status = mentoring.estado_mentoria
                 count_meetings = len(mentoring.encontros)
                 
