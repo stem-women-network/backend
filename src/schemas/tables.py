@@ -64,8 +64,8 @@ class Mentorada(SQLModel, table=True):
     conta_ativa : bool = Field(default = False)
 
     # New fields for matching selections (list of strings)
-    hobbies : list[str] | None = Field(sa_column=Column(ARRAY(String)))
-    competencias_interesse : list[str] | None = Field(sa_column=Column(ARRAY(String)))
+    hobbies : list[str] = Field(sa_column=Column(ARRAY(String)))
+    competencias_interesse : list[str]  = Field(sa_column=Column(ARRAY(String)))
 
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
@@ -102,7 +102,7 @@ class Mentora(SQLModel, table=True):
     disponibilidade : str = Field()
 
     # New hobby field to match with mentees
-    hobbies : list[str] | None = Field(sa_column=Column(ARRAY(String)))
+    hobbies : list[str] = Field(sa_column=Column(ARRAY(String)))
     
     id_usuario : uuid.UUID = Field(foreign_key="usuario.id_usuario")
     id_universidade_instituicao : uuid.UUID | None = Field(foreign_key="universidade_instituicao.id_universidade_instituicao")
@@ -113,10 +113,12 @@ class Mentora(SQLModel, table=True):
     mentorias : list["Mentoria"] = Relationship(back_populates="mentora")
 
 class PedidosMentoria(SQLModel, table=True):
+    __tablename__ : str = "pedidos_mentoria"
     id_pedidos_mentoria : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     estado_pedido : str = Field(max_length=10)
     data_pedido : datetime = Field(default_factory=datetime.now)
-    
+    pontuacao : int = Field()
+    motivo : list[str] = Field(sa_column=Column(ARRAY(String)))
     id_mentora : uuid.UUID = Field(foreign_key="mentora.id_mentora")
     id_mentorada : uuid.UUID = Field(foreign_key="mentorada.id_mentorada")
     mentora : Mentora = Relationship(back_populates="pedidos")
