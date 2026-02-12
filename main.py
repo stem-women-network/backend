@@ -9,6 +9,7 @@ from src.routers import (
     mentoradas,
     mentoring,
     meetings,
+    admin
 )
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -32,6 +33,7 @@ app.include_router(
 app.include_router(mentoradas.router, prefix="/mentoradas", tags=["Mentoradas"])
 app.include_router(mentoring.router, prefix="/mentoring", tags=["Mentoring"])
 app.include_router(meetings.router, prefix="/meetings", tags=["Meetings"])
+app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 
 @app.get("/")
 def root():

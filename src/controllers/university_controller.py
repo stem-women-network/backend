@@ -5,8 +5,6 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from src.models.login import get_current_user
 from src.schemas.tables import Administrador, Coordenador, Mentora, Mentoria, UniversidadeInstituicao, Usuario
 from pydantic import BaseModel
-import json
-
 
 class UniversityResponse(BaseModel):
     id: UUID
