@@ -20,11 +20,8 @@ class UniversityUpdate(BaseModel):
 
 
 class UniversityController:
-    """Controller for university/institution management"""
-
     @staticmethod
     def list_universities(token : str, session: Session) -> list[dict]:
-        """List all universities/institutions"""
         user = get_current_user(token, session)
         try:
             if user is None:
@@ -75,14 +72,13 @@ class UniversityController:
 
     @staticmethod
     def get_university(
-        id_universidade_instituicao: int, session: Session
+        id_universidade_instituicao: UUID, session: Session
     ) -> UniversidadeInstituicao:
-        """Get a specific university/institution by ID"""
         universidade = session.get(UniversidadeInstituicao, id_universidade_instituicao)
         if not universidade:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Universidade/Instituição não encontrada",
+                detail="Universidade não encontrada",
             )
         return universidade
 
@@ -90,8 +86,27 @@ class UniversityController:
     def create_university(
         data: UniversityCreate, session: Session
     ) -> UniversidadeInstituicao:
-        """Create a new university/institution"""
-        universidade = UniversidadeInstituicao(**data.dict())
+        if not data.nome_instituicao or not data.nome_instituicao.strip():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Nome da universidade não pode estar vazio",
+            )
+        
+        existing = session.exec(
+            select(UniversidadeInstituicao).where(
+                UniversidadeInstituicao.nome_instituicao == data.nome_instituicao
+            )
+        ).first()
+        
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Universidade já existe",
+            )
+        
+        universidade = UniversidadeInstituicao(
+            nome_instituicao=data.nome_instituicao.strip()
+        )
         session.add(universidade)
         session.commit()
         session.refresh(universidade)
@@ -99,14 +114,13 @@ class UniversityController:
 
     @staticmethod
     def update_university(
-        id_universidade_instituicao: int, data: UniversityUpdate, session: Session
+        id_universidade_instituicao: UUID, data: UniversityUpdate, session: Session
     ) -> UniversidadeInstituicao:
-        """Update a university/institution"""
         universidade = session.get(UniversidadeInstituicao, id_universidade_instituicao)
         if not universidade:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Universidade/Instituição não encontrada",
+                detail="Universidade não encontrada",
             )
 
         update_data = data.dict(exclude_unset=True)
@@ -120,16 +134,15 @@ class UniversityController:
 
     @staticmethod
     def delete_university(
-        id_universidade_instituicao: int, session: Session
+        id_universidade_instituicao: UUID, session: Session
     ) -> dict:
-        """Delete a university/institution"""
         universidade = session.get(UniversidadeInstituicao, id_universidade_instituicao)
         if not universidade:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Universidade/Instituição não encontrada",
+                detail="Universidade não encontrada",
             )
 
         session.delete(universidade)
         session.commit()
-        return {"message": "Universidade/Instituição deletada com sucesso"}
+        return {"message": "Universidade deletada com sucesso"}
