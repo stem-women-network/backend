@@ -1,4 +1,7 @@
-from fastapi import APIRouter
+from typing import Literal
+from uuid import UUID
+from fastapi import APIRouter, HTTPException, Request, Response
+from starlette.status import HTTP_401_UNAUTHORIZED
 from src.controllers.university_controller import (
     UniversityController,
     UniversityResponse,
@@ -10,11 +13,28 @@ from src.database import SessionDep
 router = APIRouter()
 
 
-@router.get("/", response_model=list[UniversityResponse])
-def list_universities(session: SessionDep):
-    return UniversityController.list_universities(session)
+@router.get("/", response_model=list[dict[Literal['id','name','coord','matches'],str|UUID|int]])
+def list_universities(request : Request,response : Response,session: SessionDep):
+    authorization = request.headers.get("authorization")
+    if authorization is not None:
+        token = authorization.split(" ")[1]
+        universities = UniversityController.list_universities(token, session)
+        return universities
+    else:
+        response.status_code = HTTP_401_UNAUTHORIZED
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
-
+@router.get("/count")
+def get_count(request: Request, response : Response, session : SessionDep):
+    authorization = request.headers.get("authorization")
+    if authorization is not None:
+        token = authorization.split(" ")[1]
+        count = UniversityController.get_count(token, session)
+        return count
+    else:
+        response.status_code = HTTP_401_UNAUTHORIZED
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+    
 @router.get("/{id_universidade_instituicao}", response_model=UniversityResponse)
 def get_university(id_universidade_instituicao: int, session: SessionDep):
     return UniversityController.get_university(id_universidade_instituicao, session)
