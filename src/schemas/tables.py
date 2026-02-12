@@ -7,8 +7,8 @@ import uuid
 class Usuario(SQLModel, table=True):
     id_usuario : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     nome_completo : str = Field(max_length=100)
-    cpf : str = Field(min_length=14,max_length=14)
-    email : EmailStr = Field()
+    cpf : str = Field(min_length=14,max_length=14, unique=True)
+    email : EmailStr = Field(unique=True)
     senha : str = Field(min_length=60, max_length=60)
     data_nascimento : date = Field()
 
