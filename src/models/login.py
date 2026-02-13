@@ -1,5 +1,6 @@
 import enum
 from typing import Tuple
+from uuid import UUID
 from pydantic import BaseModel
 from sqlmodel import Session, select
 import bcrypt
@@ -122,7 +123,7 @@ class Cadastro:
                 hobbies = cadastro.hobbies_interesses,
                 disponibilidade = cadastro.disponibilidade,
                 id_usuario = usuario.id_usuario,
-                id_universidade_instituicao=None,
+                id_universidade_instituicao=UUID(cadastro.universidade_instituicao),
                 termo_assinado = None
             )
             session.add(mentorada)

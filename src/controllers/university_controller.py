@@ -1,7 +1,7 @@
 from uuid import UUID
 from fastapi import HTTPException, status
 from sqlmodel import Session, col, func, select
-from starlette.status import HTTP_401_UNAUTHORIZED
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_500_INTERNAL_SERVER_ERROR
 from src.models.login import get_current_user
 from src.schemas.tables import Administrador, Coordenador, Mentora, Mentoria, UniversidadeInstituicao, Usuario
 from pydantic import BaseModel
@@ -54,6 +54,20 @@ class UniversityController:
             print(e)
             raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
+    @staticmethod
+    def get_universities_names(session : Session):
+        try:
+            universidades = session.exec(
+                    select(
+                        col(UniversidadeInstituicao.id_universidade_instituicao).label("id"),
+                        col(UniversidadeInstituicao.nome_instituicao).label("name"),
+                    )
+            ).mappings().all()
+            return universidades
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=HTTP_500_INTERNAL_SERVER_ERROR)
+        
     @staticmethod
     def get_count(token: str, session: Session) -> dict[str,int]:
         user = get_current_user(token, session)

@@ -36,6 +36,10 @@ def get_count(request: Request, response : Response, session : SessionDep):
         response.status_code = HTTP_401_UNAUTHORIZED
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
+@router.get("/names")
+def get_universities_names(session : SessionDep):
+    return UniversityController.get_universities_names(session)
+
 
 @router.get("/search/{nome}", response_model=list[UniversidadeInstituicao])
 def search_universities(nome: str, session: SessionDep):
