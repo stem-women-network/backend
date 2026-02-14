@@ -1,6 +1,6 @@
 from uuid import UUID
 from fastapi import HTTPException, status
-from sqlmodel import Session, col, func, select
+from sqlmodel import Session, col, distinct, func, select, or_
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_500_INTERNAL_SERVER_ERROR
 from src.models.login import get_current_user, get_password_hash
 from src.schemas.tables import Administrador, ConviteCoordenador, Coordenador, Mentora, Mentoria, UniversidadeInstituicao, Usuario
@@ -39,19 +39,18 @@ class UniversityController:
                     select(col(UniversidadeInstituicao.id_universidade_instituicao).label("id"),
                            col(UniversidadeInstituicao.nome_instituicao).label("name"),
                            col(Usuario.nome_completo).label("coord"),
-                           func.count().label("matches")
+                           func.count(Mentoria.estado_mentoria).label("matches")
                            )\
                     .join(UniversidadeInstituicao.coordenadores)
                     .join(Usuario, Usuario.id_usuario == Coordenador.id_usuario)\
-                    .join(Mentora, Mentora.id_universidade_instituicao == UniversidadeInstituicao.id_universidade_instituicao)\
-                    .where(Mentora.conta_ativa)\
-                    .join(Mentoria)\
+                    .outerjoin(Mentora, UniversidadeInstituicao.id_universidade_instituicao == Mentora.id_universidade_instituicao)\
+                    .outerjoin(Mentoria)\
+                    .where((Mentora.conta_ativa == True) | (Mentora.conta_ativa == None))
                     .group_by(UniversidadeInstituicao.id_universidade_instituicao,
                               UniversidadeInstituicao.nome_instituicao,
-                              Usuario.nome_completo,
-                              Mentoria.estado_mentoria
+                              Usuario.nome_completo
                               )\
-                    .where(Mentoria.estado_mentoria == "ativa")\
+                    .where((Mentoria.estado_mentoria == "ativa") | (Mentoria.estado_mentoria == None))
                 ).mappings().all()
             print(universidades)
             return universidades
