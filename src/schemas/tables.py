@@ -199,3 +199,10 @@ class MensagemMentoria(SQLModel, table=True):
     mensagens : list[dict[Literal["actor","datetime","message"],str]] = Field(sa_column=Column(ARRAY(JSON)))
     id_mentoria : uuid.UUID = Field(foreign_key="mentoria.id_mentoria")
     mentoria : Mentoria = Relationship(back_populates="mensagens")    
+
+class ConviteCoordenador(SQLModel, table=True):
+    __tablename__ : str = "convite_coordenador"
+    id_convite_coordenador : uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    email : EmailStr = Field(unique=True)
+    senha_temporaria : str = Field(min_length=60, max_length=60)
+    nome_instituicao : str = Field(max_length=100)

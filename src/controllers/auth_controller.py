@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from pydantic import BaseModel
-from src.models.login import Login, LoginModel, Cadastro, CadastroMentora, CadastroMentorada
+from src.models.login import CadastroCoordenador, Login, LoginModel, Cadastro, CadastroMentora, CadastroMentorada
 
 
 class LoginResponse(BaseModel):
@@ -48,3 +48,13 @@ class AuthController:
                 detail="Erro ao registrar mentorada",
             )
         return {"message": "Mentorada registrada com sucesso"}
+
+    @staticmethod
+    def signup_coordinator(credentials: CadastroCoordenador) -> dict:
+        signup = Cadastro.fazer_cadastro_coordenador(credentials)
+        if signup is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Erro ao registrar coordenador"
+            )
+        return signup

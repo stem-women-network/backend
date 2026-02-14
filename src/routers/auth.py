@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from src.controllers.auth_controller import AuthController
-from src.models.login import LoginModel, CadastroMentora, CadastroMentorada
+from src.models.login import CadastroCoordenador, LoginModel, CadastroMentora, CadastroMentorada
 
 router = APIRouter()
 
@@ -18,3 +18,7 @@ def signup_mentora(credentials: CadastroMentora):
 @router.post("/signup-mentee")
 def signup_mentorada(credentials: CadastroMentorada):
     return AuthController.signup_mentee(credentials)
+
+@router.post("/signup-coordinator")
+def signup_coordinator(credentials: CadastroCoordenador):
+    return AuthController.signup_coordinator(credentials)

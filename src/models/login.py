@@ -1,7 +1,9 @@
 import enum
 from typing import Tuple
 from uuid import UUID
+from fastapi import HTTPException
 from pydantic import BaseModel
+from sqlalchemy.sql.base import _NoneName
 from sqlmodel import Session, select
 import bcrypt
 import jwt
@@ -9,8 +11,10 @@ from datetime import date, timedelta, timezone, datetime
 import dotenv
 import os
 
+from starlette.status import HTTP_401_UNAUTHORIZED
+
 from src.database import engine
-from src.schemas.tables import Mentora, Mentorada, Usuario
+from src.schemas.tables import ConviteCoordenador, Coordenador, Mentora, Mentorada, UniversidadeInstituicao, Usuario
 
 dotenv.load_dotenv()
 
@@ -89,6 +93,14 @@ class CadastroMentora(CadastroModel):
     disponibilidade : str
     ajuda : str
     bio : str | None
+
+class CadastroCoordenador(BaseModel):
+    email : str
+    senha: str
+    nome_completo : str
+    cpf : str
+    data_nascimento : str
+    senha_temporaria : str
     
 class Cadastro:
     @classmethod
@@ -183,6 +195,46 @@ class Cadastro:
         except Exception as e:
             print(e)
             return None
+        finally:
+            session.close()
+
+    @classmethod
+    def fazer_cadastro_coordenador(cls, cadastro : CadastroCoordenador):
+        session = Session(engine)
+        try:
+            email = cadastro.email
+            senha_temp = cadastro.senha_temporaria
+            convite_coordenador = session.exec(select(ConviteCoordenador).where(ConviteCoordenador.email == email)).one_or_none()
+            if convite_coordenador is None:
+                raise HTTPException(HTTP_401_UNAUTHORIZED,detail="Esse email não foi cadastro como convidado")
+            if verify_password(senha_temp, convite_coordenador.senha_temporaria):
+                usuario = Usuario(
+                    nome_completo=cadastro.nome_completo,
+                    email=cadastro.email,
+                    senha=get_password_hash(cadastro.senha),
+                    cpf=cadastro.cpf,
+                    data_nascimento = date(
+                        int(cadastro.data_nascimento.split("/")[2]),
+                        int(cadastro.data_nascimento.split("/")[1]),
+                        int(cadastro.data_nascimento.split("/")[0])
+                    )
+                )
+                session.add(usuario)
+                universidade = UniversidadeInstituicao(
+                    nome_instituicao=convite_coordenador.nome_instituicao
+                )
+                
+                session.add(universidade)
+                
+                coordenador = Coordenador(
+                    id_usuario = usuario.id_usuario,
+                    id_universidade_instituicao=universidade.id_universidade_instituicao
+                )
+                session.add(coordenador)
+                session.commit()
+                return {"details": "Coordenador cadastrado"}
+            else:
+                raise HTTPException(HTTP_401_UNAUTHORIZED, detail="A senha temporária não é a mesma que foi fornecida no convite")
         finally:
             session.close()
         
