@@ -54,8 +54,14 @@ def get_university(id_universidade_instituicao: UUID, session: SessionDep):
 
 
 @router.post("/", response_model=UniversidadeInstituicao)
-def create_university(data: UniversityCreate, session: SessionDep):
-    return UniversityController.create_university(data, session)
+def create_university(data: UniversityCreate, request: Request, response: Response, session: SessionDep):
+    authorization = request.headers.get("authorization")
+    if authorization is not None:
+        token = authorization.split(" ")[1]
+        return UniversityController.create_university(token, data, session)
+    else:
+        response.status_code = HTTP_401_UNAUTHORIZED
+        raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
 
 @router.put("/{id_universidade_instituicao}", response_model=UniversidadeInstituicao)

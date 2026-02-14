@@ -2,9 +2,13 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlmodel import Session, col, func, select
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_500_INTERNAL_SERVER_ERROR
-from src.models.login import get_current_user
-from src.schemas.tables import Administrador, Coordenador, Mentora, Mentoria, UniversidadeInstituicao, Usuario
-from pydantic import BaseModel
+from src.models.login import get_current_user, get_password_hash
+from src.schemas.tables import Administrador, ConviteCoordenador, Coordenador, Mentora, Mentoria, UniversidadeInstituicao, Usuario
+from pydantic import BaseModel, EmailStr
+import secrets
+import string
+
+from src.services.email_service import EmailService
 
 class UniversityResponse(BaseModel):
     id: UUID
@@ -13,11 +17,12 @@ class UniversityResponse(BaseModel):
 
 class UniversityCreate(BaseModel):
     nome_instituicao: str
+    email : str
 
 
 class UniversityUpdate(BaseModel):
     nome_instituicao: str | None = None
-
+    
 
 class UniversityController:
     @staticmethod
@@ -96,35 +101,57 @@ class UniversityController:
             )
         return universidade
 
+
+    
     @staticmethod
-    def create_university(
+    def create_university(token:str,
         data: UniversityCreate, session: Session
-    ) -> UniversidadeInstituicao:
-        if not data.nome_instituicao or not data.nome_instituicao.strip():
-            raise HTTPException(
+    ) -> dict[str,str] | None:
+        user = get_current_user(token, session)
+        try:
+            if user is None:
+                raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+            statement = select(Administrador).where(Administrador.id_usuario == user.id_usuario)
+            admin = session.exec(statement).one_or_none()
+            if admin is None:
+                raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
+            if data.nome_instituicao == "":
+                raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Nome da universidade não pode estar vazio",
-            )
+                )
         
-        existing = session.exec(
-            select(UniversidadeInstituicao).where(
-                UniversidadeInstituicao.nome_instituicao == data.nome_instituicao
+            existing = session.exec(
+                    select(UniversidadeInstituicao).where(
+                        UniversidadeInstituicao.nome_instituicao == data.nome_instituicao
+                    )
+                ).first()
+
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Universidade já existe",
+                )
+
+            senha_temporaria = ''.join(secrets.choice(
+                string.ascii_letters + string.digits + string.punctuation
+            ) for i in range(20)) # gera uma senha temporária de 20 caracteres
+            conviteCoordenador = ConviteCoordenador(
+                email=data.email.strip(),
+                nome_instituicao=data.nome_instituicao.strip(),
+                senha_temporaria= get_password_hash(senha_temporaria)
             )
-        ).first()
-        
-        if existing:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Universidade já existe",
+            EmailService.send_coordinator_invite(
+                coordinator_email = data.email,
+                temp_password= senha_temporaria,
+                university_name=data.nome_instituicao.strip()
             )
-        
-        universidade = UniversidadeInstituicao(
-            nome_instituicao=data.nome_instituicao.strip()
-        )
-        session.add(universidade)
-        session.commit()
-        session.refresh(universidade)
-        return universidade
+            session.add(conviteCoordenador)
+            session.commit()
+            session.refresh(conviteCoordenador)
+            return {}
+        except Exception as e:
+            print(e)
 
     @staticmethod
     def update_university(
