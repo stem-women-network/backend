@@ -69,7 +69,7 @@ class MentoringModel:
                 id_mentoria= mentoring_id,
                 tipo_material= file_type,
                 titulo_material= title,
-                arquivo= base64.b64encode(file)
+                arquivo=file
             )
             session.add(material)
             session.commit()
@@ -109,19 +109,20 @@ class MentoringModel:
             session.close()
 
     @classmethod
-    def download_file(cls, token: str, file_id: str):
+    def download_file(cls, token: str, file_id: str) -> tuple[bytes | None, str | None]:
         session = Session(engine)
         try:
             user = get_current_user(token, session)
             if user is None:
-                return None
+                return None, None
             user_type = get_tipo_usuario(user)
             result = ""
             if user_type == TipoUsuario.MENTORA:
                 mentor = user.mentoras[0]
                 result = session.exec(
                     select(
-                        MaterialMentoria.arquivo
+                        MaterialMentoria.arquivo,
+                        MaterialMentoria.tipo_material
                     )\
                     .where(
                         MaterialMentoria.id_arquivo_mentoria == file_id
@@ -136,7 +137,8 @@ class MentoringModel:
                 mentee = user.mentoradas[0]
                 result = session.exec(
                     select(
-                        MaterialMentoria.arquivo
+                        MaterialMentoria.arquivo,
+                        MaterialMentoria.tipo_material
                     )\
                     .where(
                         MaterialMentoria.id_arquivo_mentoria == file_id
@@ -147,11 +149,14 @@ class MentoringModel:
                         Mentorada.id_mentorada == mentee.id_mentorada
                     )
                 ).one_or_none()
+            if result is None or result == '':
+                return (None, None)
             return result
         except Exception as e:
             print(e)
         finally:
             session.close()
+        return None, None
 
     @classmethod
     def delete_file(cls,token: str, file_id: str):

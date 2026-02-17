@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Form, HTTPException, Header, Request, Response, File
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 
@@ -25,9 +26,9 @@ def get_messages(data : OtherId, request: Request, response: Response):
         raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
 
 @router.post("/send-file")
-async def send_file(file: bytes = File(),title:str=Form(),file_type:str=Form(), mentee_id: str = Form(), authorization : str = Header()):
+async def send_file(file: str = Form(),title:str=Form(),file_type:str=Form(), mentee_id: str = Form(), authorization : str = Header()):
     token = authorization.split(" ")[1]
-    MentoringModel.send_file(file, title, file_type, token, mentee_id)
+    MentoringModel.send_file(base64.b64decode(file), title, file_type, token, mentee_id)
     return {}
 
 @router.get("/get-files/")
@@ -41,12 +42,22 @@ async def get_file(mentee_id: str,request : Request, response : Response):
             raise HTTPException(status_code=HTTP_404_NOT_FOUND)
         result = []
         for file in files:
-            result.append({
-                "id" : file[0],
-                "title" : file[1],
-                "type" : file[2],
-                "size" : file[3]
-            })
+            if file[2] == "video":
+                print(file[1])
+                result.append({
+                    "id" : file[0],
+                    "title" : file[1],
+                    "type" : file[2],
+                    "size" : file[3],
+                    "url" : MentoringModel.download_file(token,str(file[0]))[0]
+                })
+            else:
+                result.append({
+                    "id" : file[0],
+                    "title" : file[1],
+                    "type" : file[2],
+                    "size" : file[3]
+                })
         return result
     else:
         response.status_code = HTTP_401_UNAUTHORIZED
@@ -57,11 +68,14 @@ async def download_file(file_id: str ,request: Request, response : Response):
      authorization = request.headers.get("authorization")
      if authorization is not None:
          token = authorization.split(" ")[1]
-         file = MentoringModel.download_file(token, file_id)
-         if file is None or file == '':
+         file, file_type = MentoringModel.download_file(token, file_id)
+         if file is None:
              response.status_code = HTTP_401_UNAUTHORIZED
              raise HTTPException(status_code=HTTP_404_NOT_FOUND)
-         return base64.b64encode(file)
+         return {
+             "file" : base64.b64encode(file),
+             "type" : file_type
+         }
      else:
          response.status_code = HTTP_401_UNAUTHORIZED
          raise HTTPException(status_code=HTTP_401_UNAUTHORIZED)
