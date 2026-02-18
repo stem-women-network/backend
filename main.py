@@ -6,7 +6,7 @@ from src.routers import (
     auth,
     certificates,
     universities,
-    mentoradas,
+    mentee,
     mentoring,
     meetings,
     admin
@@ -30,7 +30,7 @@ app.include_router(certificates.router, prefix="/certificates", tags=["Certifica
 app.include_router(
     universities.router, prefix="/universities", tags=["Universidades"]
 )
-app.include_router(mentoradas.router, prefix="/mentoradas", tags=["Mentoradas"])
+app.include_router(mentee.router, prefix="/mentee", tags=["Mentoradas"])
 app.include_router(mentoring.router, prefix="/mentoring", tags=["Mentoring"])
 app.include_router(meetings.router, prefix="/meetings", tags=["Meetings"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])

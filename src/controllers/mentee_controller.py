@@ -1,6 +1,10 @@
+from datetime import datetime
 from fastapi import HTTPException, status
-from sqlmodel import Session, select
-from src.schemas.tables import Mentorada
+from sqlalchemy import label
+from sqlmodel import Session, col, desc, literal, select
+from starlette.status import HTTP_404_NOT_FOUND
+from src.models.login import get_current_user
+from src.schemas.tables import Mentorada, Mentoria, Usuario
 from pydantic import BaseModel
 
 
@@ -91,3 +95,43 @@ class MenteeController:
         session.delete(mentorada)
         session.commit()
         return {"message": "Mentorada deletada com sucesso"}
+
+    @staticmethod
+    def get_card_info(token : str, session: Session) -> dict:
+        user = get_current_user(token, session)
+        try:
+            if user is None:
+                raise Exception()
+            
+            statement = select(Mentoria.estado_mentoria)\
+                .join(Mentorada, Mentoria.id_mentorada == Mentoria.id_mentorada)\
+                .where(Mentorada.id_usuario == user.id_usuario)\
+                .where(Mentoria.ano_mentoria == datetime.now().year)\
+                .order_by(desc(Mentoria.comeco_mentoria))\
+                .limit(1)
+            
+            mentoring_status = session.exec(statement).one_or_none()
+            if mentoring_status is None:
+                mentoring_status = "pendente"
+            print(mentoring_status)
+            statement = select(
+                col(Usuario.nome_completo).label("name"),
+                col(Mentorada.curso).label("course"),
+                col(Mentorada.semestre).label("semester"),
+                col(Mentorada.disponibilidade).label("availability"),
+                literal(mentoring_status).label("status")
+            )\
+            .where(Mentorada.id_usuario == user.id_usuario)\
+            .join(Usuario)
+            mentee = session.exec(statement)\
+                .mappings().one_or_none()
+            if mentee is None:
+                raise Exception()
+            return mentee
+        except Exception as e:
+            print(e)
+            raise HTTPException(
+                HTTP_404_NOT_FOUND,
+                "Mentorada não encontrada"
+            )
+        

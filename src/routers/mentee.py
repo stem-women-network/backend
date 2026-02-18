@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request, Response
 from src.controllers.mentee_controller import (
     MenteeController,
     MenteeResponse,
@@ -9,6 +9,15 @@ from src.database import SessionDep
 
 router = APIRouter()
 
+@router.get("/get-card-info")
+def get_card_info(request : Request, response : Response, session : SessionDep):
+    authorization = request.headers.get("authorization")
+    if authorization is not None:
+        token = authorization.split(" ")[1]
+        mentee = MenteeController.get_card_info(
+            token, session
+        )
+        return mentee
 
 @router.get("/", response_model=list[MenteeResponse])
 def list_mentees(session: SessionDep):
